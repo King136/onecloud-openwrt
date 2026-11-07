@@ -92,6 +92,7 @@ jobs:
           cp -a target openwrt/
           mkdir -p openwrt/files
           cp -a files/. openwrt/files/
+          cp -a package openwrt/ 2>/dev/null || true
           chmod +x scripts/*.sh \
             openwrt/files/usr/sbin/onecloud-install-emmc \
             openwrt/files/etc/uci-defaults/* \
