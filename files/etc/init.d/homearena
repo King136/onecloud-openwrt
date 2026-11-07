@@ -1,0 +1,45 @@
+#!/bin/sh /etc/rc.common
+# HomeArena 家庭棋牌竞技场 —— iStoreOS / OpenWrt procd 托管脚本
+# 由 opkg 安装到 /etc/init.d/homearena，可被 procd 启停、开机自启、崩溃自动拉起
+START=95
+STOP=10
+USE_PROCD=1
+
+APP_DIR=/opt/homearena
+LOG=/var/log/homearena.log
+PIDF=/var/run/homearena.pid
+
+find_node() {
+    # 优先用 PATH 里的 node；其次兼容 Entware(/opt/bin) 与原生(/usr/bin)
+    if command -v node >/dev/null 2>&1; then
+        command -v node
+        return 0
+    fi
+    for p in /opt/bin/node /usr/bin/node /opt/homearena/node; do
+        [ -x "$p" ] && { echo "$p"; return 0; }
+    done
+    return 1
+}
+
+start_service() {
+    local node_bin
+    node_bin="$(find_node)" || {
+        logger -t homearena "缺少 node 运行时，请先执行: opkg update && opkg install node"
+        echo "[homearena] 错误：未找到 node，请先 opkg install node" >&2
+        exit 1
+    }
+    mkdir -p "$(dirname "$LOG")" "$(dirname "$PIDF")"
+    procd_open_instance homearena
+    procd_set_param env PORT="${PORT:-8088}" DATA_DIR="${DATA_DIR:-/opt/homearena/server/data}"
+    procd_set_param command "$node_bin" "$APP_DIR/server/index.js"
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_set_param pidfile "$PIDF"
+    procd_set_param respawn
+    procd_close_instance
+    echo "[homearena] 已交由 procd 托管，监听 :${PORT:-8088} (node=$node_bin)"
+}
+
+service_triggers() {
+    procd_add_reload_trigger homearena
+}

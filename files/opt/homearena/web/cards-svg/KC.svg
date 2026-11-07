@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 165" width="120" height="165" shape-rendering="geometricPrecision"><rect x="0.5" y="0.5" width="119" height="164" rx="7" fill="#fffdf7" stroke="#8c7a5c" stroke-width="1"/><g transform="translate(9,5) scale(0.2679)"><path d="M10 0 L30 0 L30 46 L58 0 L84 0 L50 52 L88 112 L62 112 L30 60 L30 112 L10 112 Z" fill="#101418" fill-rule="evenodd"/></g><g transform="translate(9,36) scale(1.0833)" fill="#101418"><circle cx="12" cy="7.4" r="5.6"/><circle cx="6.4" cy="14.6" r="5.6"/><circle cx="17.6" cy="14.6" r="5.6"/><path d="M11.4 14.4 L9.6 21.6 L14.4 21.6 L12.6 14.4 Z"/></g>
+    <g>
+      <!-- 框 -->
+      <rect x="14" y="14" width="92" height="137" rx="4"
+            fill="none" stroke="#101418" stroke-width="1.4"/>
+      <!-- 头 -->
+      <ellipse cx="60" cy="56" rx="17" ry="20" fill="#f6e3c8" stroke="#101418" stroke-width="1.2"/>
+      <!-- 发 -->
+      <path d="M43 50 C43 32 50 24 60 24 C70 24 77 32 77 50
+               C74 42 68 38 60 38 C52 38 46 42 43 50 Z" fill="#101418"/>
+      <!-- 冠（K/Q 才有） -->
+      <path d="M42 30 L50 18 L60 28 L70 18 L78 30 Z" fill="#d4af37" stroke="#101418" stroke-width="1"/>
+      <!-- 眼 -->
+      <circle cx="53" cy="55" r="1.6" fill="#101418"/>
+      <circle cx="67" cy="55" r="1.6" fill="#101418"/>
+      <!-- 身/袍 -->
+      <path d="M30 150 C30 110 42 84 60 84 C78 84 90 110 90 150 Z"
+            fill="#101418" opacity="0.92"/>
+      <path d="M60 84 L48 118 L60 138 L72 118 Z" fill="#d4af37" opacity="0.85"/>
+      <!-- 手持物（K 剑 / Q 花 / J 杖） -->
+      <rect x="86" y="92" width="4" height="52" rx="2" fill="#d4af37"/>
+      
+      
+      <!-- 注意：v0.11.0 去掉了「中央小花色」。
+           原先在袍子正中放一枚金色花色，本意是加强辨识，实测是**脏**：
+           它和袍子的金色菱形叠在一起，缩到 20px 宽时糊成一团泥。
+           人像牌的辨识靠左上角标（那是永远完整露出的部分）就够了。 -->
+    </g><g transform="translate(120,165) rotate(180)"><g transform="translate(9,5) scale(0.2679)"><path d="M10 0 L30 0 L30 46 L58 0 L84 0 L50 52 L88 112 L62 112 L30 60 L30 112 L10 112 Z" fill="#101418" fill-rule="evenodd"/></g><g transform="translate(9,36) scale(1.0833)" fill="#101418"><circle cx="12" cy="7.4" r="5.6"/><circle cx="6.4" cy="14.6" r="5.6"/><circle cx="17.6" cy="14.6" r="5.6"/><path d="M11.4 14.4 L9.6 21.6 L14.4 21.6 L12.6 14.4 Z"/></g></g></svg>

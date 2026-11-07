@@ -1,0 +1,5208 @@
+/* ==========================================================================
+   HomeArena · 水墨青岚皮肤（v0.10）
+   --------------------------------------------------------------------------
+   设计目标：把 QQ 游戏那种「山水背景 + 圆木桌 + 人物立绘 + 倍数印章」
+   转译成国风语汇，而不是照搬卡通。
+
+     QQ 斗地主元素         →  本皮肤对应
+     ───────────────────────────────────────────
+     卡通风景背景          →  水墨远山 + 竹影 + 圆月 + 莲池
+     圆木牌桌              →  紫檀木纹椭圆案几 + 鎏金包边
+     Q 版人物立绘          →  水墨剪影座次牌 + 功名标签
+     倍数气泡              →  朱文印章「倍」
+     金币 / 身价           →  铜钱纹「身家」
+     炸弹火焰              →  朱砂「雷火」戳
+
+   全部用 CSS 渐变 + 内联 SVG 实现，零图片资源，任意分辨率不糊。
+   ========================================================================== */
+
+/* ---------- 皮肤变量 ---------- */
+:root {
+  --ink-1: #0a1410;          /* 远山最深处 */
+  --ink-2: #12241c;
+  --ink-3: #1b3529;
+  --jade-1: #2f6b52;         /* 青岚 */
+  --jade-2: #1e4d3a;
+  --jade-3: #143528;
+  --rosewood-1: #6b4426;     /* 紫檀 */
+  --rosewood-2: #4a2d18;
+  --rosewood-3: #2e1b0e;
+  --gilt-1: #d9b36a;         /* 鎏金 */
+  --gilt-2: #a67c34;
+  --cinnabar: #c0392b;       /* 朱砂 */
+  --rice: #f2ead6;           /* 宣纸 */
+  --moon: #f7f0d8;
+}
+
+/* ---------- 牌桌外壳：水墨山水背景 ---------- */
+/* 直接用 .card-room 自身背景绘制山水。
+   之前用 ::before + z-index:-2 会被父元素背景盖住（负 z-index 在父背景之下），
+   改成父级直接画，层级最简单也最稳。 */
+.card-room,
+.mahjong-room {
+  position: relative;
+  isolation: isolate;
+  border-radius: 16px;
+  background-color: #0b1a16;
+  background-image:
+    /* 四周暗角，聚焦中央 */
+    radial-gradient(130% 88% at 50% 44%, transparent 30%, rgba(3, 10, 7, .66) 100%),
+    /* 圆月（放在座位牌右上方空隙） */
+    radial-gradient(circle at 88% 6%, rgba(250, 244, 220, .50) 0 22px, rgba(250, 244, 220, .16) 23px 42px, transparent 43px),
+    /* 远山：压在座位牌后方，从牌位间隙透出 */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200' preserveAspectRatio='none'><path d='M0 96 L34 62 L66 84 L98 48 L134 80 L168 52 L204 86 L238 60 L272 90 L308 64 L344 92 L376 72 L400 94 L400 200 L0 200 Z' fill='%23336b52' opacity='.55'/><path d='M0 126 L32 100 L70 120 L106 88 L144 116 L180 94 L218 122 L256 98 L296 124 L334 102 L372 126 L400 110 L400 200 L0 200 Z' fill='%23234c3a' opacity='.70'/></svg>"),
+    /* 竹林：左右各一组，画得细而淡——SVG 会被非等比拉伸，
+       做成「竹影」比写实竹竿更耐看，也不会因变形变成柱子 */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300' preserveAspectRatio='none'><g stroke='%234cae86' stroke-width='1.5' opacity='.34'><path d='M14 300 L11 76'/><path d='M32 300 L37 122'/><path d='M50 300 L46 164'/><path d='M386 300 L389 84'/><path d='M368 300 L363 130'/><path d='M350 300 L355 172'/></g><g fill='%2343a37c' opacity='.26'><path d='M11 96 l22 -8 -20 17 z'/><path d='M37 142 l-22 -9 20 17 z'/><path d='M46 184 l22 -8 -20 17 z'/><path d='M11 202 l20 -8 -19 16 z'/><path d='M389 104 l-22 -8 20 17 z'/><path d='M363 150 l22 -9 -20 17 z'/><path d='M355 192 l-22 -8 20 17 z'/><path d='M389 210 l-20 -8 19 16 z'/></g></svg>"),
+    /* 底色渐变 */
+    linear-gradient(180deg, #1d4a37 0%, #143227 46%, #0a1a14 100%);
+  background-size:
+    100% 100%,
+    auto,
+    100% 46%,
+    100% 100%,
+    100% 100%;
+  background-position:
+    center,
+    center,
+    center 6%,
+    center,
+    center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+/* 右侧镜像竹林已并入主背景 SVG，::before 留空以便后续叠加其它装饰 */
+
+/* ---------- 牌桌：紫檀椭圆案几 ---------- */
+.card-room .table,
+.mahjong-room .table {
+  position: relative;
+  background: transparent;
+  padding: 0;
+  /* 竖向屏收窄，让两侧露出水墨山水，视觉上像「案几摆在亭中」 */
+  max-width: 660px;
+  margin: 0 auto;
+}
+
+.card-room .felt,
+.mahjong-room .felt {
+  position: relative;
+  border: none;
+  border-radius: 46% / 32%;
+  background:
+    /* 桌面高光 */
+    radial-gradient(64% 50% at 50% 8%, rgba(255, 246, 216, .22), transparent 58%),
+    /* 年轮（同心椭圆，像整块木料切面） */
+    repeating-radial-gradient(ellipse 120% 90% at 50% 46%,
+      rgba(0, 0, 0, .055) 0 5px,
+      rgba(255, 255, 255, .028) 5px 11px,
+      rgba(0, 0, 0, .030) 11px 17px),
+    /* 顺纹 */
+    repeating-linear-gradient(93deg,
+      rgba(0, 0, 0, .05) 0 3px,
+      rgba(255, 255, 255, .016) 3px 7px),
+    /* 案面渐变 */
+    radial-gradient(120% 100% at 50% 0%, #7a5029, #5c3a1c 48%, #35200f 100%);
+  box-shadow:
+    /* 鎏金外圈 */
+    0 0 0 3px rgba(217, 179, 106, .42),
+    0 0 0 6px rgba(120, 86, 40, .28),
+    0 0 0 7px rgba(0, 0, 0, .35),
+    /* 内阴影（凹陷感） */
+    inset 0 8px 30px rgba(0, 0, 0, .58),
+    inset 0 -12px 26px rgba(0, 0, 0, .50),
+    /* 外投影 */
+    0 20px 46px rgba(0, 0, 0, .60);
+  transition: border-radius .3s ease;
+}
+
+/* 案几中央的篆刻水印 */
+.card-room .felt::after,
+.mahjong-room .felt::after {
+  content: '和';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ink, serif);
+  font-size: clamp(52px, 9vw, 96px);
+  font-weight: 900;
+  color: rgba(217, 179, 106, .07);
+  letter-spacing: .1em;
+  pointer-events: none;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .18);
+  user-select: none;
+}
+
+/* 麻将桌保留原有青玉案面，但同样上椭圆 + 金边 */
+.mahjong-room .felt {
+  border-radius: 44% / 36%;
+  background:
+    radial-gradient(72% 58% at 50% 12%, rgba(255, 252, 226, .18), transparent 62%),
+    repeating-linear-gradient(94deg, rgba(0, 0, 0, .07) 0 2px, rgba(255, 255, 255, .02) 2px 6px),
+    radial-gradient(120% 100% at 50% 0%, #2f7a5e, #1d513e 54%, #123528 100%);
+}
+.mahjong-room .felt::after { content: '竹'; }
+
+/* ---------- 座次：水墨座牌 ---------- */
+.card-room .ring-seat,
+.mahjong-room .ring-seat {
+  position: relative;
+  padding: 6px 10px 5px;
+  border-radius: 10px 10px 8px 8px;
+  background:
+    linear-gradient(180deg, rgba(28, 42, 34, .92), rgba(12, 22, 17, .94));
+  border: 1px solid rgba(217, 179, 106, .22);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .05);
+  transition: box-shadow .22s ease, border-color .22s ease, transform .22s ease;
+}
+
+/* 座牌顶部一道鎏金细线，像卷轴天头 */
+.card-room .ring-seat::before,
+.mahjong-room .ring-seat::before {
+  content: '';
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 3px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(217, 179, 106, .55), transparent);
+}
+
+/* 当前行动方：金框 + 呼吸光 */
+.card-room .ring-seat.active,
+.mahjong-room .ring-seat.active {
+  border-color: rgba(217, 179, 106, .72);
+  box-shadow:
+    0 0 0 1px rgba(217, 179, 106, .28),
+    0 0 22px rgba(217, 179, 106, .22),
+    0 8px 20px rgba(0, 0, 0, .5);
+}
+
+/* 头像加鎏金圆环 */
+.card-room .ring-seat .rs-ava,
+.mahjong-room .ring-seat .rs-ava {
+  border-radius: 50%;
+  padding: 2px;
+  background: conic-gradient(from 210deg, var(--gilt-1), #7a5a24, var(--gilt-1), #7a5a24, var(--gilt-1));
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .5), 0 3px 10px rgba(0, 0, 0, .45);
+}
+
+.card-room .ring-seat.active .rs-ava,
+.mahjong-room .ring-seat.active .rs-ava {
+  animation: giltSpin 3.2s linear infinite;
+}
+@keyframes giltSpin {
+  to { filter: hue-rotate(12deg) brightness(1.06); }
+}
+
+.card-room .ring-seat .rs-name,
+.mahjong-room .ring-seat .rs-name {
+  font-family: var(--font-ink, serif);
+  letter-spacing: .06em;
+}
+
+/* ---------- 状态条：朱砂底金字 ---------- */
+.card-room .status,
+.mahjong-room .status {
+  color: #f7e7b6;
+  background:
+    linear-gradient(180deg, rgba(120, 40, 28, .82), rgba(74, 22, 14, .88));
+  border: 1px solid rgba(217, 179, 106, .42);
+  box-shadow: 0 3px 14px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 226, 168, .16);
+  font-family: var(--font-ink, serif);
+  letter-spacing: .08em;
+}
+
+/* ---------- 对手牌数徽章 ---------- */
+.card-room .oseat,
+.mahjong-room .oseat {
+  background: linear-gradient(180deg, rgba(24, 38, 30, .9), rgba(10, 20, 15, .92));
+  border: 1px solid rgba(217, 179, 106, .20);
+  border-radius: 9px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .38);
+}
+.card-room .oseat b,
+.mahjong-room .oseat b {
+  font-family: var(--font-ink, serif);
+  letter-spacing: .04em;
+}
+.card-room .oseat em,
+.mahjong-room .oseat em {
+  color: rgba(217, 200, 160, .78);
+}
+
+/* 报牌（剩 ≤2 张）用朱砂描边 */
+.card-room .oseat.bao,
+.mahjong-room .oseat.bao {
+  border-color: rgba(192, 57, 43, .70) !important;
+  background: linear-gradient(180deg, rgba(96, 30, 22, .90), rgba(52, 14, 10, .94)) !important;
+  box-shadow: 0 0 16px rgba(192, 57, 43, .30), 0 3px 10px rgba(0, 0, 0, .40);
+}
+
+/* ---------- 算牌器：竹简格子 ---------- */
+.card-room .counter .cv {
+  border-radius: 3px;
+  border-color: rgba(217, 179, 106, .18);
+  background: linear-gradient(180deg, rgba(30, 44, 34, .92), rgba(12, 22, 16, .94));
+}
+.card-room .counter .cv i { color: rgba(232, 219, 186, .82); }
+.card-room .counter .cv b { color: #f4ecd6; }
+.card-room .counter .cv.last b { color: #ffb84d; }
+.card-room .counter .cv.gone { opacity: .26; }
+
+/* ---------- 牌面：宣纸质感 ---------- */
+.card-room .card,
+.card-room .hand .card {
+  background:
+    linear-gradient(168deg, #fffdf7 0%, #f6f1e2 62%, #eae2cd 100%);
+  border: 1px solid rgba(90, 70, 40, .30);
+  border-radius: 6px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, .85) inset,
+    0 -1px 0 rgba(120, 96, 60, .18) inset,
+    0 3px 8px rgba(0, 0, 0, .48);
+  font-family: var(--font-ink, serif);
+}
+
+.card-room .card.sel {
+  border-color: rgba(217, 179, 106, .95);
+  box-shadow:
+    0 0 0 1px rgba(217, 179, 106, .55),
+    0 0 16px rgba(217, 179, 106, .45),
+    0 6px 14px rgba(0, 0, 0, .5);
+}
+
+/* ==========================================================================
+   v0.10.19 修复「选 4 张只记 1~3 张」
+   --------------------------------------------------------------------------
+   症状：用户连点四张，只有前面一两张显示为选中，按钮上的数字也跟着少。
+   以为计数错了，其实是**视觉上被盖住了**。
+
+   根因：手牌用绝对定位叠压，layoutHand → packRow 给每张牌写
+   `zIndex = i + 1`（越靠右越高，这是对的，右边的牌要压住左边）。
+   而选中态只靠 `transform: translateY(-10px)` 上浮 —— 上浮 10px 之后，
+   它**仍然被右侧那张 z-index 更高的牌压住**：
+   `.sel` 的 z-index 是 4/5，紧邻的未选中牌是 6/7，直接盖在上面。
+   17 张手牌里只有「最右一张被选中」才看得见，中间选中的全被吞掉。
+
+   修复：选中牌一律提到最高层级（含双行、横屏、放大态），
+   配合原有的上浮，视觉上才是「这张被我挑出来了」。 */
+/* v0.42.0（R31）：不再把选中牌提到 z-index 60 —— 那会让它在叠压行里
+ * 挣脱右邻的遮盖，以完整牌面浮出，和只露一条的邻牌撕成两套尺寸。
+ * 现在选中牌保持原来的 z-index（= 它在行内的序号），只靠
+ * -8px 上浮 + 蓝色描边 + 顶部指示条辨识；指示条落在可见区内，
+ * 右邻（从 left+show 起）盖不到它。 */
+.card-room .hand .card.sel,
+.mahjong-room .hand .card.sel,
+.hand.two-row .card.sel { transform: translateY(-8px); }
+
+/* ---------- 倍数印章 ---------- */
+.card-room .table-area,
+.mahjong-room .table-area { position: relative; }
+
+.ink-mult {
+  position: absolute;
+  left: 10px;
+  top: 8px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px 2px 6px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(150, 46, 32, .92), rgba(96, 26, 16, .95));
+  border: 1px solid rgba(217, 179, 106, .55);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .45);
+  font-family: var(--font-ink, serif);
+  font-size: 11px;
+  color: #ffe9b8;
+  letter-spacing: .06em;
+  pointer-events: none;
+}
+.ink-mult b {
+  font-size: 13px;
+  color: #fff;
+}
+
+/* ---------- 桌面出牌区：牌略微放大、带落桌阴影 ---------- */
+.card-room .lastplay .card,
+.card-room .felt .card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .55), 0 0 0 1px rgba(90, 70, 40, .22);
+}
+
+/* ==========================================================================
+   横屏手机（矮屏 landscape）—— v0.10.1 重写
+   --------------------------------------------------------------------------
+   旧版是「左座位栏 108px + 右牌桌」两列，在 844×390 上：
+     · 牌桌被压到 190px 宽，felt 椭圆撑不开，视觉上像消失；
+     · 算牌器 15 格被挤进 92px，数字糊成一片；
+     · 手牌双行 + 操作条加起来 > 视图高度，向下溢出被裁。
+   新版改为「座位横条 + 牌桌主区 + 手牌右置」的三区版式：
+     head 通栏 / seats 通栏（横排紧凑条）/ table 主区 / hand 右列
+   手牌在横屏改回单行（横向空间足够，不需要双行）。
+   ========================================================================== */
+/* ══════════════════════════════════════════════════════════════════════════
+   v0.10.20  横屏版式扩展适用范围：矮屏横屏 **或** 界面强制横屏
+   --------------------------------------------------------------------------
+   用户要求「竖屏状态加一个横屏切换键，状态可以自由控制」。
+   竖屏手机点切换后，物理尺寸仍是 393×684，但界面要按 684×393 排。
+   原来所有横屏规则都写成 `(orientation: landscape) and (max-height: 560px)`：
+     · orientation 由**物理视口宽高比**推导，CSS 变换不会改变它 → 不命中；
+     · 即使命中，max-height:560 也要求物理高度 ≤560，竖屏手机 684 也不满足。
+   ⇒ 竖屏点「横屏」后拿不到任何横屏版式，牌桌仍然是竖屏那条窄带。
+
+   CSS 媒体查询不能「或」两个不同的条件组，所以这里把整段条件并排复制一份：
+   同一份规则体，两个媒体查询头。维护成本是「改规则要改两处」，
+   但比把竖屏手机伪造出横屏度量（会被浏览器当成作弊，且不可靠）稳得多。
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (orientation: landscape) and (max-height: 560px) {
+    /* ── v0.10.11 关键修复：横屏段曾被上下分区彻底打翻 ────────────────────────
+     * 事故现象（844×390 实测）：
+     *     .room.card-room 计算出的 grid-template-areas =
+     *         "head head" "seats seats" "table hand" "counter hand" "acts hand"
+     *     即**五轨横屏模板**，且 .room-main 在里面被当成普通子项自动放置，
+     *     牌桌高度 0、信息面板 display:none、页面竖向溢出 184px。
+     *
+     * 原因：本段用 `.room.card-room`（specificity 0,2,0）给房间根节点写死了
+     * 五轨模板，而 v0.10.11 的上下分区写在 `.card-room`（0,1,0）上，
+     * 特异度输一级 → 外层 main/info 分区被整段覆盖。
+     *
+     * 现在：**房间根节点只允许承载上下分区**（1fr + info），
+     * 横屏仍然保留「手牌右列」的版式，但改动对象换成 `.room-main` 内部：
+     *     head  通栏
+     *     seats 通栏
+     *     table | hand   ← 主区两列
+     *     counter | hand
+     *     acts  | hand
+     * 横屏高度紧张，info 面板默认收起（30px 标题条），高度全部让给牌桌。
+     * ---------------------------------------------------------------------- */
+    .room.card-room,
+    .room.mahjong-room {
+      display: grid;
+      /* ── v0.10.19 横屏改左右分栏 ────────────────────────────────────────
+       * 用户：「横屏下 UI 非常不协调，正确做法是把牌桌放在右侧区域，
+       *       战绩、记分、聊天等模块集中放在左侧，使整体更和谐优雅。」
+       *
+       * 原版是上下分区：.room-main 通栏（1fr）+ info 30px 甚至 display:none。
+       * 实测 844×390 下：牌桌被压成 122px 高的扁条，底下 240px 全是空绿背景，
+       * 而战绩/聊天**完全不显示**（.info-panel 宽高为 0）。这既浪费屏幕，
+       * 也丢掉了横屏最大的优势 —— 横向空间。
+       *
+       * 改为：左 info（330px 定宽，放战绩/积分/聊天）+ 右 main（1fr，牌桌）。
+       * 手机横屏 844 宽：左 300 + 右 528，牌桌能拿到 500+ 宽，
+       * 高度也从 122 涨到接近满高，桌面不再是「扁条」。
+       * 平板横屏（≥1024）左栏加宽到 360。
+       *
+       * v0.10.20：改成**按比例**而不是定宽 300px。
+       * 实测「竖屏 393×684 点横屏」→ 逻辑宽只有 684，定宽 300 左栏吃掉 44%，
+       * 牌桌只剩 356px，手牌 20 张根本排不下（截图里只露出最右一张）。
+       * 现在 30% / 上限 300px / 下限 200px：684 宽时左栏 205、牌桌约 455。 */
+      grid-template-columns: minmax(210px, min(310px, 34%)) minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr);
+      grid-template-areas: "info main";
+      column-gap: 8px;
+      row-gap: 0;
+      padding: 3px 10px 3px;
+    }
+    /* 横屏不再隐藏 info 面板 —— 它现在是左栏的主内容 */
+    .room.card-room > .info-panel,
+    .room.mahjong-room > .info-panel { display: grid; }
+    .room.card-room > .info-panel.collapsed,
+    .room.mahjong-room > .info-panel.collapsed {
+      /* 用户主动收起时，左栏收成一条窄边，牌桌吃满 */
+      display: none;
+    }
+    .room.card-room:has(> .info-panel.collapsed),
+    .room.mahjong-room:has(> .info-panel.collapsed) {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: "main";
+    }
+    /* 左栏：四块竖排（战绩 / 积分 / 牌局数据 / 聊天），占满高度。
+     * v0.10.19：新增第 3 块 .ins-card —— 牌局数据在横屏不再用浮层
+     * （浮层会盖住聊天框，见 style.css 里的说明），改为左栏一张卡。
+     * 高度分配按内容密度给：战绩要逐行列人（1fr），积分一般 3 行（.62fr），
+     * 牌局数据是 2×3 网格（.82fr），聊天要留输入行（1.15fr）。 */
+    .room.card-room > .info-panel,
+    .room.mahjong-room > .info-panel {
+      grid-template-columns: minmax(0, 1fr);
+      /* 实测 384px 总高（含 3×5px gap = 369 可用）下四块的实际需求：
+       *   战绩 103 / 积分 64 / 牌局数据 100 / 聊天 118 —— 合计 385，差 16px。
+       * 牌局数据原来只拿到 84px（正文 53px），2×3 网格三行要 66px，
+       * 第三行「最大 / 我出」直接被 overflow:hidden 裁掉（截图可见）。
+       * 现在给足 1.02fr（≈100px），缺的高度从战绩里扣 —— 战绩行本身是
+       * 可滚动的 .ist-list，少于 3 人时还有富余。 */
+      /* v0.16.0（R4-9k）四卡→三卡：牌局数据卡横屏由牌桌浮层承担，左栏隐藏它，
+       * 把 1.02fr 让给聊天（旧值 .82/.55/1.02/1.12 下聊天只有 107px，
+       * 而聊天卡 5 段内容需要 190px，记录区被裁到 39px）。
+       * 行数与区域数必须一致：4 个 row 配 4 个 area，否则浏览器会多生成隐式行，
+       * 多余轨道空着、聊天落回第 3 行 —— 实测正是这个原因导致调比例无效。 */
+      grid-template-rows: minmax(0, .5fr) minmax(0, .34fr) minmax(0, 2.55fr) 0;
+      grid-template-areas: "rec" "rank" "chat" "ins";
+      gap: 5px;
+      padding: 0;
+      align-content: stretch;
+    }
+
+    /* 右侧主区：v0.10.19 起改为**单列纵向**（head / seats / table / hand / acts）。
+     * 原来的「手牌右列」是为了在通栏布局下省高度；现在左栏已经拿走了
+     * 战绩聊天，右侧只剩牌桌本身，横向空间足够铺开 17 张手牌，
+     * 再分右列只会把牌桌挤成一条缝。 */
+    .card-room > .room-main,
+    .mahjong-room > .room-main {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto auto minmax(0, 1fr) auto auto minmax(46px, auto);
+      grid-template-areas:
+        "head"
+        "seats"
+        "table"
+        "counter"
+        "acts"
+        "hand";
+      column-gap: 0;
+      row-gap: 2px;
+    }
+
+    /* 座位环 + 状态 + 对手徽章：合并成一条顶部横带（head 之下），
+       避免三块各自占一行把牌桌挤没。 */
+    .card-room > .ring,
+    .mahjong-room > .ring,
+    .card-room > .room-main > .ring,
+    .mahjong-room > .room-main > .ring {
+      grid-area: seats;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0;
+      align-self: center;
+      min-width: 0;
+      max-width: none;
+      overflow: visible;
+    }
+    .card-room .ring .ring-seat,
+    .mahjong-room .ring .ring-seat {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 5px;
+      width: auto;
+      padding: 2px 8px 2px 3px;
+      border-radius: 20px;
+    }
+    .card-room .ring .ring-seat .rs-ava,
+    .mahjong-room .ring .ring-seat .rs-ava {
+      transform: none;
+      flex: 0 0 auto;
+      width: 26px;
+      height: 26px;
+    }
+    .card-room .ring .ring-seat .rs-ava .ava,
+    .mahjong-room .ring .ring-seat .rs-ava .ava { width: 26px !important; height: 26px !important; }
+    .card-room .ring .ring-seat .rs-name,
+    .mahjong-room .ring .ring-seat .rs-name {
+      font-size: 11px;
+      max-width: 84px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-room .ring .ring-seat .rs-st,
+    .mahjong-room .ring .ring-seat .rs-st { display: none; }
+
+    /* 牌桌主区 */
+    .card-room .table-area,
+    .mahjong-room .table-area {
+      grid-area: table;
+      padding: 0;
+      gap: 2px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .card-room .table-area > .status,
+    .mahjong-room .table-area > .status { padding: 1px 10px; font-size: 11.5px; }
+    .card-room .table-area > .opp,
+    .mahjong-room .table-area > .opp { gap: 4px; }
+    .card-room .oseat,
+    .mahjong-room .oseat { padding: 1px 7px; font-size: 10.5px; }
+    .card-room .oseat em,
+    .mahjong-room .oseat em { font-size: 9.5px; }
+    .card-room .table-area > .table,
+    .mahjong-room .table-area > .table {
+      flex: 1 1 auto;
+      min-height: 70px;
+      max-height: none;
+    }
+    /* 横屏牌桌拉成扁椭圆 */
+    .card-room .felt { border-radius: 50% / 44%; }
+    .mahjong-room .felt { border-radius: 48% / 42%; }
+
+    /* 算牌器落在 table 下方的独立行 */
+    .card-room > .counter-bar,
+    .mahjong-room > .counter-bar,
+    .card-room > .room-main > .counter-bar,
+    .mahjong-room > .room-main > .counter-bar { grid-area: counter; padding: 1px 0 0; }
+    .card-room .counter { max-width: 100%; gap: 1px; padding: 0; }
+    .card-room .counter .cv { border-radius: 3px; padding: 0; }
+    .card-room .counter .cv i { font-size: 8px; line-height: 1.05; }
+    .card-room .counter .cv b { font-size: 10.5px; line-height: 1.05; }
+
+    /* 横屏手牌：v0.10.19 起改成右侧主区的独立一行（不再跨 3 行右列） */
+    .card-room > .hand-area,
+    .mahjong-room > .hand-area,
+    .card-room > .room-main > .hand-area,
+    .mahjong-room > .room-main > .hand-area {
+      grid-area: hand;
+      align-self: center;
+      justify-self: stretch;
+      padding-top: 0;
+      margin-top: 0;
+      min-width: 0;
+      max-width: 100%;
+      height: auto;
+      min-height: 64px;
+      overflow: visible;
+    }
+    .card-room > .hand-area.has-two-row,
+    .mahjong-room > .hand-area.has-two-row,
+    .card-room > .room-main > .hand-area.has-two-row,
+    .mahjong-room > .room-main > .hand-area.has-two-row { min-height: 64px; }
+    .card-room .hand,
+    .mahjong-room .hand {
+      padding: 6px 6px 4px;
+      min-height: 0;
+      background: none;
+      box-shadow: none;
+    }
+    /* 横屏牌面：v0.11.0 起尺寸统一由 cards-native.css 的 --card-w 推导，
+       这里只保留内距与字号。（原先写死 40×56，比例 1:1.4 与素材 1:1.375 不符，
+       每张牌被纵向压扁 1.8%，人像牌面部会轻微变形。） */
+    .card-room .hand .card {
+      width: var(--card-w, 42px);
+      height: calc(var(--card-w, 42px) * var(--card-ar, 1.375));
+      padding: 2px 2px 2px 4px;
+      border-radius: 5px;
+    }
+    .mahjong-room .hand .tile {
+      /* v0.11.0：改读 --tile-w / --tile-h（cards-native.css 里定义），
+         不再硬写 40×56 —— 硬写值会被 style.css 媒体查询里的同名规则压掉。 */
+      width: var(--tile-w, 40px);
+      height: var(--tile-h, 56px);
+      padding: 2px;
+      border-radius: 5px;
+    }
+    .card-room .hand .card .rk { font-size: 13px; }
+    .card-room .hand .card .st { font-size: 12px; }
+    /* 横屏强制单行：撤销双行结构（JS 仍在，用 CSS 拉平） */
+    .card-room .hand.two-row,
+    .mahjong-room .hand.two-row {
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: flex-end;
+      gap: 0;
+      padding: 4px 4px 2px;
+    }
+    .card-room .hand.two-row .hand-row,
+    .mahjong-room .hand.two-row .hand-row {
+      display: contents;      /* 让两行子元素合并进同一 flex 行 */
+    }
+    .card-room .hand.two-row .card.sel { transform: translateY(-8px); }
+
+    .card-room .actionbar,
+    .mahjong-room .actionbar { grid-area: acts; padding: 4px 9px; align-self: end; }
+
+    /* 背景：远山压低 */
+    .card-room,
+    .mahjong-room {
+      background-size:
+        100% 100%,
+        auto,
+        100% 58%,
+        100% 100%,
+        100% 100%;
+      background-position: center, center, center 0%, center, center;
+    }
+    /* head 通栏，禁止被列宽挤压换行 */
+    .card-room .room-head,
+    .mahjong-room .room-head {
+      grid-area: head;
+      padding: 1px 10px;
+      min-width: 0;
+      flex-wrap: nowrap;
+      overflow: hidden;
+    }
+    .card-room .room-head .rm-title,
+    .mahjong-room .room-head .rm-title {
+      max-width: 34vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+}
+/* ══════════════════════════════════════════════════════════════════════════
+   ★ v0.10.20：竖屏「强制横屏」用的横屏版式副本
+   上面那条媒体查询靠 (orientation: landscape) && (max-height:560px) 命中，
+   竖屏手机点「横屏」时物理仍是 393×684 —— orientation 依然是 portrait，
+   媒体查询永远不命中，于是牌桌还是竖屏那条窄带（这正是 v0.10.19 的遗留缺陷）。
+   改用 html.ha-rot-land 类选择器：由 ui.js 在开启强制横屏时挂上
+   <html class="ha-rot-land">，横屏版式立刻生效，与物理方向无关。
+   ⚠ 维护约定：改上面那段横屏规则时，必须同步改这一段（规则体逐条镜像）。
+   ══════════════════════════════════════════════════════════════════════════ */
+html.ha-rot-land .room.card-room,
+html.ha-rot-land .room.mahjong-room
+{
+      display: grid;
+      /* ── v0.10.19 横屏改左右分栏 ────────────────────────────────────────
+       * 用户：「横屏下 UI 非常不协调，正确做法是把牌桌放在右侧区域，
+       *       战绩、记分、聊天等模块集中放在左侧，使整体更和谐优雅。」
+       *
+       * 原版是上下分区：.room-main 通栏（1fr）+ info 30px 甚至 display:none。
+       * 实测 844×390 下：牌桌被压成 122px 高的扁条，底下 240px 全是空绿背景，
+       * 而战绩/聊天**完全不显示**（.info-panel 宽高为 0）。这既浪费屏幕，
+       * 也丢掉了横屏最大的优势 —— 横向空间。
+       *
+       * 改为：左 info（330px 定宽，放战绩/积分/聊天）+ 右 main（1fr，牌桌）。
+       * 手机横屏 844 宽：左 300 + 右 528，牌桌能拿到 500+ 宽，
+       * 高度也从 122 涨到接近满高，桌面不再是「扁条」。
+       * 平板横屏（≥1024）左栏加宽到 360。
+       *
+       * v0.10.20：改成**按比例**而不是定宽 300px。
+       * 实测「竖屏 393×684 点横屏」→ 逻辑宽只有 684，定宽 300 左栏吃掉 44%，
+       * 牌桌只剩 356px，手牌 20 张根本排不下（截图里只露出最右一张）。
+       * 现在 30% / 上限 300px / 下限 200px：684 宽时左栏 205、牌桌约 455。 */
+      grid-template-columns: minmax(210px, min(310px, 34%)) minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr);
+      grid-template-areas: "info main";
+      column-gap: 8px;
+      row-gap: 0;
+      padding: 3px 10px 3px;
+    }
+
+html.ha-rot-land .room.card-room > .info-panel,
+html.ha-rot-land .room.mahjong-room > .info-panel
+{ display: grid; }
+
+html.ha-rot-land .room.card-room > .info-panel.collapsed,
+html.ha-rot-land .room.mahjong-room > .info-panel.collapsed
+{
+      /* 用户主动收起时，左栏收成一条窄边，牌桌吃满 */
+      display: none;
+    }
+
+html.ha-rot-land .room.card-room:has(> .info-panel.collapsed),
+html.ha-rot-land .room.mahjong-room:has(> .info-panel.collapsed)
+{
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: "main";
+    }
+
+html.ha-rot-land .room.card-room > .info-panel,
+html.ha-rot-land .room.mahjong-room > .info-panel
+{
+      grid-template-columns: minmax(0, 1fr);
+      /* 实测 384px 总高（含 3×5px gap = 369 可用）下四块的实际需求：
+       *   战绩 103 / 积分 64 / 牌局数据 100 / 聊天 118 —— 合计 385，差 16px。
+       * 牌局数据原来只拿到 84px（正文 53px），2×3 网格三行要 66px，
+       * 第三行「最大 / 我出」直接被 overflow:hidden 裁掉（截图可见）。
+       * 现在给足 1.02fr（≈100px），缺的高度从战绩里扣 —— 战绩行本身是
+       * 可滚动的 .ist-list，少于 3 人时还有富余。 */
+      /* v0.16.0（R4-9k）四卡→三卡：牌局数据卡横屏由牌桌浮层承担，左栏隐藏它，
+       * 把 1.02fr 让给聊天（旧值 .82/.55/1.02/1.12 下聊天只有 107px，
+       * 而聊天卡 5 段内容需要 190px，记录区被裁到 39px）。
+       * 行数与区域数必须一致：4 个 row 配 4 个 area，否则浏览器会多生成隐式行，
+       * 多余轨道空着、聊天落回第 3 行 —— 实测正是这个原因导致调比例无效。 */
+      grid-template-rows: minmax(0, .5fr) minmax(0, .34fr) minmax(0, 2.55fr) 0;
+      grid-template-areas: "rec" "rank" "chat" "ins";
+      gap: 5px;
+      padding: 0;
+      align-content: stretch;
+    }
+
+html.ha-rot-land .card-room > .room-main,
+html.ha-rot-land .mahjong-room > .room-main
+{
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto auto minmax(0, 1fr) auto auto minmax(46px, auto);
+      grid-template-areas:
+        "head"
+        "seats"
+        "table"
+        "counter"
+        "acts"
+        "hand";
+      column-gap: 0;
+      row-gap: 2px;
+    }
+
+html.ha-rot-land .card-room > .ring,
+html.ha-rot-land .mahjong-room > .ring,
+html.ha-rot-land .card-room > .room-main > .ring,
+html.ha-rot-land .mahjong-room > .room-main > .ring
+{
+      grid-area: seats;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0;
+      align-self: center;
+      min-width: 0;
+      max-width: none;
+      overflow: visible;
+    }
+
+html.ha-rot-land .card-room > .ring .ring-seat,
+html.ha-rot-land .mahjong-room > .ring .ring-seat
+{
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 5px;
+      width: auto;
+      padding: 2px 8px 2px 3px;
+      border-radius: 20px;
+    }
+
+html.ha-rot-land .card-room > .ring .ring-seat .rs-ava,
+html.ha-rot-land .mahjong-room > .ring .ring-seat .rs-ava
+{
+      transform: none;
+      flex: 0 0 auto;
+      width: 26px;
+      height: 26px;
+    }
+
+html.ha-rot-land .card-room > .ring .ring-seat .rs-ava .ava,
+html.ha-rot-land .mahjong-room > .ring .ring-seat .rs-ava .ava
+{ width: 26px !important; height: 26px !important; }
+
+html.ha-rot-land .card-room > .ring .ring-seat .rs-name,
+html.ha-rot-land .mahjong-room > .ring .ring-seat .rs-name
+{
+      font-size: 11px;
+      max-width: 84px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+html.ha-rot-land .card-room > .ring .ring-seat .rs-st,
+html.ha-rot-land .mahjong-room > .ring .ring-seat .rs-st
+{ display: none; }
+
+html.ha-rot-land .card-room .table-area,
+html.ha-rot-land .mahjong-room .table-area
+{
+      grid-area: table;
+      padding: 0;
+      gap: 2px;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+html.ha-rot-land .card-room .table-area > .status,
+html.ha-rot-land .mahjong-room .table-area > .status
+{ padding: 1px 10px; font-size: 11.5px; }
+
+html.ha-rot-land .card-room .table-area > .opp,
+html.ha-rot-land .mahjong-room .table-area > .opp
+{ gap: 4px; }
+
+html.ha-rot-land .card-room .oseat,
+html.ha-rot-land .mahjong-room .oseat
+{ padding: 1px 7px; font-size: 10.5px; }
+
+html.ha-rot-land .card-room .oseat em,
+html.ha-rot-land .mahjong-room .oseat em
+{ font-size: 9.5px; }
+
+html.ha-rot-land .card-room .table-area > .table,
+html.ha-rot-land .mahjong-room .table-area > .table
+{
+      flex: 1 1 auto;
+      min-height: 70px;
+      max-height: none;
+    }
+
+html.ha-rot-land .card-room .felt
+{ border-radius: 50% / 44%; }
+
+html.ha-rot-land .mahjong-room .felt
+{ border-radius: 48% / 42%; }
+
+html.ha-rot-land .card-room > .counter-bar,
+html.ha-rot-land .mahjong-room > .counter-bar,
+html.ha-rot-land .card-room > .room-main > .counter-bar,
+html.ha-rot-land .mahjong-room > .room-main > .counter-bar
+{ grid-area: counter; padding: 1px 0 0; }
+
+html.ha-rot-land .card-room .counter
+{ max-width: 100%; gap: 1px; padding: 0; }
+
+html.ha-rot-land .card-room .counter .cv
+{ border-radius: 3px; padding: 0; }
+
+html.ha-rot-land .card-room .counter .cv i
+{ font-size: 8px; line-height: 1.05; }
+
+html.ha-rot-land .card-room .counter .cv b
+{ font-size: 10.5px; line-height: 1.05; }
+
+html.ha-rot-land .card-room > .hand-area,
+html.ha-rot-land .mahjong-room > .hand-area,
+html.ha-rot-land .card-room > .room-main > .hand-area,
+html.ha-rot-land .mahjong-room > .room-main > .hand-area
+{
+      grid-area: hand;
+      align-self: center;
+      justify-self: stretch;
+      padding-top: 0;
+      margin-top: 0;
+      min-width: 0;
+      max-width: 100%;
+      height: auto;
+      min-height: 64px;
+      overflow: visible;
+    }
+
+html.ha-rot-land .card-room > .hand-area.has-two-row,
+html.ha-rot-land .mahjong-room > .hand-area.has-two-row,
+html.ha-rot-land .card-room > .room-main > .hand-area.has-two-row,
+html.ha-rot-land .mahjong-room > .room-main > .hand-area.has-two-row
+{ min-height: 64px; }
+
+html.ha-rot-land .card-room .hand,
+html.ha-rot-land .mahjong-room .hand
+{
+      padding: 6px 6px 4px;
+      min-height: 0;
+      background: none;
+      box-shadow: none;
+    }
+
+html.ha-rot-land .card-room .hand .card
+{
+      width: var(--card-w, 42px);
+      height: calc(var(--card-w, 42px) * var(--card-ar, 1.375));
+      padding: 2px 2px 2px 4px;
+      border-radius: 5px;
+    }
+html.ha-rot-land .mahjong-room .hand .tile
+{
+      width: var(--tile-w, 40px);
+      height: var(--tile-h, 56px);
+      padding: 2px;
+      border-radius: 5px;
+    }
+
+html.ha-rot-land .card-room .hand .card .rk
+{ font-size: 13px; }
+
+html.ha-rot-land .card-room .hand .card .st
+{ font-size: 12px; }
+
+html.ha-rot-land .card-room .hand.two-row,
+html.ha-rot-land .mahjong-room .hand.two-row
+{
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: flex-end;
+      gap: 0;
+      padding: 4px 4px 2px;
+    }
+
+html.ha-rot-land .card-room .hand.two-row .hand-row,
+html.ha-rot-land .mahjong-room .hand.two-row .hand-row
+{
+      display: contents;      /* 让两行子元素合并进同一 flex 行 */
+    }
+
+html.ha-rot-land .card-room .hand.two-row .card.sel
+{ transform: translateY(-8px); }
+
+html.ha-rot-land .card-room .actionbar,
+html.ha-rot-land .mahjong-room .actionbar
+{ grid-area: acts; padding: 4px 9px; align-self: end; }
+
+html.ha-rot-land .card-room,
+html.ha-rot-land .mahjong-room
+{
+      background-size:
+        100% 100%,
+        auto,
+        100% 58%,
+        100% 100%,
+        100% 100%;
+      background-position: center, center, center 0%, center, center;
+    }
+
+html.ha-rot-land .card-room .room-head,
+html.ha-rot-land .mahjong-room .room-head
+{
+      grid-area: head;
+      padding: 1px 10px;
+      min-width: 0;
+      flex-wrap: nowrap;
+      overflow: hidden;
+    }
+
+html.ha-rot-land .card-room .room-head .rm-title,
+html.ha-rot-land .mahjong-room .room-head .rm-title
+{
+      /* v0.10.20：原来 34vw。竖屏点横屏时 34vw 是按**物理宽 393** 算的
+         （=133px），标题被截成「人机陪练…」。改用逻辑宽（视口高的 34%）。 */
+      max-width: 34vh;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+
+/* Pad 横屏（1024×768）：放宽牌桌最大宽度，牌面加大 */
+@media (orientation: landscape) and (min-height: 561px) and (min-width: 900px) {
+  .card-room,
+  .mahjong-room { max-width: 1180px; }
+  .card-room .table { max-width: 860px; }
+  .card-room .hand .card { width: var(--card-w, 62px); height: calc(var(--card-w, 62px) * var(--card-ar, 1.375)); }
+  .card-room .felt { border-radius: 48% / 38%; }
+  .mahjong-room .table { max-width: 900px; }
+}
+
+/* Pad 竖屏：牌桌适度加宽，手牌留白 */
+@media (orientation: portrait) and (min-width: 700px) {
+  .card-room .table { max-width: 760px; }
+  .card-room .hand .card { width: var(--card-w, 60px); height: calc(var(--card-w, 60px) * var(--card-ar, 1.375)); }
+  .card-room .felt { border-radius: 44% / 30%; }
+}
+
+/* ---------- 动效降级：尊重系统「减少动态效果」 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .card-room .ring-seat.active .rs-ava,
+  .mahjong-room .ring-seat.active .rs-ava { animation: none; }
+  .card-room .felt,
+  .mahjong-room .felt { transition: none; }
+}
+
+/* ==========================================================================
+   牌桌页整体版式（v0.10.1）
+   --------------------------------------------------------------------------
+   竖屏从「head/seats/table/hand/actions」五轨改为六轨，算牌器独立成轨：
+       head
+       seats      座位环（头像 + 姓名 + 剩余张数）
+       table      状态条 + 对手徽章 + 牌桌（可伸缩）
+       counter    算牌器（固定 40px，不被牌桌挤成一条线）
+       hand       手牌（单行或双行）
+       actions    主操作 + 折叠聊天
+   牌桌最大高度收到 26vh，把省下的高度全部让给手牌 —— 这是本轮
+   「一行牌太小」问题的直接解法：先给手牌腾空间，再谈两行。
+   ========================================================================== */
+.card-room > .room-main,
+.mahjong-room > .room-main {
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+  /* 关键：单列也必须显式 minmax(0,1fr)。
+     Grid 默认列是 auto —— 会被手牌内容撑宽，20~25 张牌时整页横向溢出 180px。
+     这一条是双升（25 张）竖屏溢出的根因。 */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "head"
+    "seats"
+    "table"
+    "counter"
+    "hand"
+    "actions";
+  gap: 2px;
+}
+.card-room > .counter-bar,
+.mahjong-room > .counter-bar { grid-area: counter; }
+
+.card-room .table-area > .table,
+.mahjong-room .table-area > .table {
+  flex: 1 1 auto;
+  min-height: 88px;
+  /* v0.10.9：改用 px 上限。vh 在高屏（如 1080×1880）会算出 564px，
+     牌桌占掉半屏、手牌被挤到记牌器下面。出牌区最多摆两行牌，
+     240px 足够；余量全部让给手牌和操作条。 */
+  max-height: min(34vh, 240px);
+}
+
+/* 竖屏手机：牌桌高度按视口给足，手牌优先但不把牌桌压成一条
+   v0.10.7c：19vh→24vh，160px 的桌布在 377px 轨道里显得空旷；24vh 约 200px 更饱满 */
+@media (orientation: portrait) and (max-width: 620px) {
+  /* 牌桌高度随视口变化：24vh 兼顾「桌布有存在感」与「双行手牌 ~170px」 */
+  .card-room .table-area > .table,
+  .mahjong-room .table-area > .table { max-height: min(30vh, 220px); min-height: 84px; }
+  .card-room .table-area,
+  .mahjong-room .table-area { gap: 4px; padding: 2px 0 0; }
+  /* 座位环与状态条压缩，把高度让给手牌 */
+  .card-room .ring,
+  .mahjong-room .ring { padding: 0; }
+  .card-room .ring-seat,
+  .mahjong-room .ring-seat { padding: 3px 7px 2px; }
+  .card-room .status,
+  .mahjong-room .status { padding: 2px 10px; font-size: 12px; }
+  .card-room .oseat,
+  .mahjong-room .oseat { padding: 1px 8px; }
+  /* 状态条 + 对手徽章同行排布，垂直方向少占一行 */
+  .card-room .table-area > .opp,
+  .mahjong-room .table-area > .opp { gap: 4px; }
+}
+
+/* 超矮竖屏（如 360×640）：牌桌再让 2vh */
+@media (orientation: portrait) and (max-height: 700px) {
+  /* v0.10.9：原 15vh 会把 .table 压到 ~103px，桌布悬空；改为与全局一致的上限 */
+  .card-room .table-area > .table,
+  .mahjong-room .table-area > .table { max-height: min(30vh, 210px); min-height: 72px; }
+  .card-room .table-area,
+  .mahjong-room .table-area { gap: 3px; }
+}
+
+/* ==========================================================================
+   竖屏手机选牌专项优化
+   --------------------------------------------------------------------------
+   痛点：一行叠压选牌时，露出条带窄、手指粗 → 误触邻牌；
+         选中牌上浮后上缘被压 → 视觉遮挡；
+         牌紧贴操作条 → 出牌按钮误按。
+   方案：① 双行制（layoutHand 已实现），每张露出 ≥34px
+         ② 选中牌上浮 22px，行间距预留，不遮挡上一行
+         ③ 手牌区加「宣纸托盘」，与操作热区物理隔开
+         ④ 连选阈值 9px（bindHandPick），轻扫不误选
+   ========================================================================== */
+
+/* ---------- 双行手牌 ----------
+   特异度：style.css 的 `.hand { flex-direction: row }` 是 (0,1,0)，
+   table-skin 里横屏段 `.card-room .hand` 是 (0,2,0)，因此这里必须用
+   `.card-room .hand.two-row`（0,3,0）才能真正把方向掰成纵向。
+   直接写 `.hand.two-row`（0,2,0）会和横屏规则打平，谁出现得晚谁赢 —— 踩过。 */
+.card-room .hand.two-row,
+.mahjong-room .hand.two-row {
+  /* v0.42.0（R31）：与 style.css 的同名规则保持同一套口径。
+   * 这里在 style.css 之后加载、特异度相同 —— 若两边写不同的 padding/gap，
+   * 实际生效的是这里，排障时看到 style.css 会被误导。统一为 3px 行距。 */
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 3px;
+  min-height: 0;
+  height: auto;
+  padding: 10px 8px 6px;
+  overflow: visible;
+}
+.card-room .hand .hand-row,
+.mahjong-room .hand .hand-row {
+  /* v0.42.0（R31）：牌由 packRow 绝对定位，行容器只需撑满整宽 + 有高度。
+   * display:block 而不是 flex —— flex 的 align-items 会把 absolute 子项
+   * 的 bottom:0 基准挪来挪去，实测两行基线差 6px。 */
+  display: block;
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  position: relative;
+}
+/* 上/下行的层次感靠「缩进 + 轻微降亮」实现，不再压缩上行宽度。
+ * 之前把上行限制到 72% 宽度，实测上行每张只露 22px 比下行还难点，
+ * 违背了「分两行是为了好选牌」的初衷（v0.10.1 修正）。 */
+.card-room .hand .hand-row.row-top,
+.mahjong-room .hand .hand-row.row-top {
+  margin-bottom: 2px;
+  z-index: 1;
+  filter: brightness(.96);
+}
+.card-room .hand .hand-row.row-bot,
+.mahjong-room .hand .hand-row.row-bot { z-index: 2; }
+.hand.two-row .card { transition: transform .12s var(--ease), box-shadow .14s, border-color .14s; }
+.hand.two-row .card:hover { transform: none; }
+/* v0.42.0（R31）：选中牌只抬 8px，不改变牌宽、不脱离叠压序列。 */
+.hand.two-row .card.sel { transform: translateY(-8px); }
+
+
+/* 关键：双行手牌必须完整落在 hand 轨道内，不允许向下溢出被操作条裁掉。
+   .hand-area 原先是 padding-top + 负 margin 的上浮结构，双行时改为贴合。 */
+.card-room > .hand-area.has-two-row,
+.mahjong-room > .hand-area.has-two-row {
+  padding-top: 0;
+  margin-top: 0;
+  align-self: end;
+  overflow: visible;
+  /* 双行必须拿到两行高度：不设上限，由内容撑开，网格轨道 auto 承接 */
+  height: auto;
+  min-height: 0;
+}
+
+/* 小屏触屏：牌面字号加大，露出区一眼可辨 */
+@media (orientation: portrait) and (max-width: 620px) {
+  .card-room .hand.two-row .card .rk { font-size: 16px; }
+  .card-room .hand.two-row .card .st { font-size: 14px; }
+  /* 双行时手牌托盘不需要大上内边距 */
+  .card-room .hand.two-row { padding: 4px 4px 2px; }
+}
+
+/* 单行（少量手牌）在手机上放大命中区 */
+@media (orientation: portrait) and (max-width: 620px) {
+  .card-room .hand-area,
+  .mahjong-room .hand-area {
+    padding-top: 30px;
+    margin-top: -30px;
+  }
+  .card-room .hand:not(.two-row),
+  .mahjong-room .hand:not(.two-row) {
+    min-height: 0;
+    padding: 26px 6px 8px;
+    border-radius: 14px 14px 0 0;
+    background: linear-gradient(180deg, var(--tray-1) 0%, var(--tray-2) 40%, var(--tray-3) 100%);
+    box-shadow: inset 0 1px 0 rgba(217, 179, 106, .12);
+  }
+  .card-room .hand .card.sel,
+  .mahjong-room .hand .tile.sel { transform: translateY(-8px); }
+  .card-room .hand.two-row .card.sel { transform: translateY(-8px); }
+  .card-room .hand .card.sel {
+    border-color: var(--gilt-1, #d9b36a);
+    box-shadow:
+      0 0 0 2px rgba(217, 179, 106, .95),
+      0 0 18px rgba(217, 179, 106, .45),
+      0 10px 22px rgba(0, 0, 0, .55);
+  }
+  .card-room .hand .card:hover { transform: none; }
+  .mahjong-room .hand .tile:hover { transform: none; }
+  .mahjong-room .hand .tile.sel { border-color: var(--gilt-1, #d9b36a); }
+}
+
+/* ---------- 算牌器独立条：贴在牌桌与手牌之间 ---------- */
+.counter-bar {
+  display: flex;
+  justify-content: center;
+  padding: 2px 8px 0;
+  min-width: 0;
+}
+.counter-bar .counter { max-width: 520px; }
+
+/* ==========================================================================
+   操作条重构（v0.10.1）
+   --------------------------------------------------------------------------
+   旧版：聊天输入框与「出牌/不出/重选/智囊」挤在同一行，390px 竖屏下
+         每个按钮只剩 ~40px 宽、28px 高，远低于 44px 触控标准，误触严重。
+   新版：主操作独占一行，高度 46px，等分宽度，间距 8px；
+         聊天收进折叠行（点气泡展开），不常驻挤压按钮；
+         智囊独立金色描边，视觉层级明确。
+   ========================================================================== */
+.actionbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 8px 10px calc(8px + var(--ha-sab));
+  border-radius: 16px 16px 0 0;
+}
+.ab-ops {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+/* 主操作区：按钮等分，撑满剩余宽度 */
+.ab-ops-main {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.ab-ops-main > .btn { flex: 1 1 0; min-width: 0; }
+/* 牌型提示文字不参与等分，独占一行缩小显示 */
+.ab-ops-main > .combo-hint {
+  flex: 0 0 auto;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ab-ops-main > .wait {
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+/* 统一触控规格：≥44px 高，13.5px 字，圆角 12px */
+.actionbar .ab-ops-main .btn {
+  min-height: 46px;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 12px;
+  letter-spacing: .02em;
+}
+.actionbar .ab-ops-main .btn:active { transform: scale(.965); }
+/* 主操作（出牌）加强：品牌蓝 + 内高光，一眼找到 */
+.actionbar .ab-ops-main .btn.primary {
+  background: linear-gradient(180deg, #6aa1ff, #3b74e8);
+  border-color: rgba(255, 255, 255, .28);
+  box-shadow:
+    0 4px 14px rgba(59, 116, 232, .42),
+    inset 0 1px 0 rgba(255, 255, 255, .30);
+  font-size: 15px;
+}
+/* 次要操作（不出/重选）降级为描边，避免与主操作抢视线 */
+.actionbar .ab-ops-main .btn:not(.primary):not(.adv):not(.ab-chat-toggle) {
+  background: rgba(255, 255, 255, .06);
+  border-color: rgba(255, 255, 255, .14);
+}
+.actionbar .ab-ops-main .btn:disabled {
+  background: rgba(255, 255, 255, .03);
+  border-color: rgba(255, 255, 255, .08);
+}
+/* 聊天折叠按钮：方形 46×46，图标居中 */
+.ab-chat-toggle {
+  flex: 0 0 auto;
+  width: 46px !important;
+  min-width: 46px !important;
+  min-height: 46px;
+  padding: 0 !important;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .13);
+  color: rgba(255, 255, 255, .78);
+}
+.ab-chat-toggle.on {
+  border-color: rgba(255, 200, 87, .5);
+  color: var(--gold);
+}
+/* ── 智能提示按钮（第二波 M2）───────────────────────────────────────
+ * 与「智囊」区分：智囊是 AI 替我决定（金框，次要位置）；
+ * 提示是「给我选项，我自己选」（冰蓝描边，带 3/6 序号徽标）。
+ * 固定宽 76px，不参与 flex 等分，避免挤掉「出牌」主按钮。 */
+.actionbar .ab-ops-main .btn.hint {
+  flex: 0 0 auto;
+  width: 76px;
+  min-width: 76px;
+  max-width: 76px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0 4px;
+  background: linear-gradient(180deg, rgba(106, 180, 255, .20), rgba(106, 180, 255, .09));
+  border-color: rgba(106, 180, 255, .48);
+  color: var(--rp-blue);
+  position: relative;
+  overflow: hidden;
+}
+.actionbar .ab-ops-main .btn.hint svg { flex: 0 0 auto; }
+.actionbar .ab-ops-main .btn.hint.busy { opacity: .6; }
+.actionbar .ab-ops-main .btn.hint.busy svg { animation: hintPulse .9s ease-in-out infinite; }
+@keyframes hintPulse {
+  0%, 100% { opacity: .45; transform: scale(.92); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+/* 候选序号徽标：3/6，让玩家知道「还能切几次」 */
+.actionbar .ab-ops-main .btn.hint .hint-idx {
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 6px;
+  background: rgba(106, 180, 255, .30);
+  color: #eaf4ff;
+}
+.actionbar .ab-ops-main .btn.hint .hint-idx[hidden] { display: none; }
+/* 有候选序号时，76px 装不下「图标+提示+序号」三者：
+ * 隐藏「提示」二字只留图标+序号，信息密度最高且不出现「提..」的截断丑相。
+ * 无序号（首次点击前 / 只有 1 组）时完整显示「提示」。
+ * JS 会同时打 .has-idx 标（兼容不支持 :has() 的旧 WebView）。 */
+.actionbar .ab-ops-main .btn.hint:has(.hint-idx:not([hidden])) span,
+.actionbar .ab-ops-main .btn.hint.has-idx span { display: none; }
+.actionbar .ab-ops-main .btn.hint:has(.hint-idx:not([hidden])),
+.actionbar .ab-ops-main .btn.hint.has-idx { gap: 5px; }
+/* 智囊：金框，宽度固定不参与等分 */
+.actionbar .ab-ops .btn.adv {
+  flex: 0 0 auto;
+  min-width: 74px;
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  background: linear-gradient(180deg, rgba(255, 200, 87, .26), rgba(255, 200, 87, .12));
+  border-color: rgba(255, 200, 87, .55);
+  color: var(--rp-gold-tx);
+  box-shadow: 0 3px 12px rgba(255, 200, 87, .18);
+}
+/* 折叠聊天行：高度动画展开，展开时浮在主操作之上 */
+.ab-chat {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .22s ease, margin-top .22s ease;
+  margin-top: 0;
+  overflow: hidden;
+}
+.ab-chat > * { min-height: 0; overflow: hidden; }
+.ab-chat.open { grid-template-rows: 1fr; margin-top: 8px; }
+.ab-chat .chat-mini { display: flex; gap: 8px; }
+.ab-chat .chat-mini input {
+  flex: 1; min-width: 0;
+  min-height: 44px;
+  background: rgba(0, 0, 0, .34);
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 12px;
+  padding: 0 14px;
+  font-size: 13.5px;
+}
+.ab-chat .chat-mini .btn {
+  flex: 0 0 auto;
+  min-width: 66px;
+  min-height: 44px;
+  border-radius: 12px;
+  padding: 0 16px;
+}
+/* 无操作按钮时（如等待其他玩家），操作行退化为单行聊天入口 */
+.actionbar:not(.has-ops) .ab-ops-main { display: none; }
+.actionbar:not(.has-ops) .ab-ops { justify-content: flex-end; }
+
+/* 极窄屏（≤360px）：字号与最小宽度微调，保证 3 按钮 + 智囊仍在一行 */
+@media (max-width: 360px) {
+  .actionbar .ab-ops-main .btn { min-height: 44px; padding: 0 9px; font-size: 13px; }
+  .ab-chat-toggle { width: 44px !important; min-width: 44px !important; min-height: 44px; }
+  .actionbar .ab-ops .btn.adv { min-width: 66px; min-height: 44px; padding: 0 10px; font-size: 13px; }
+  .ab-ops { gap: 6px; }
+  .ab-ops-main { gap: 6px; }
+}
+
+/* 按钮特别多时（双升叫主 6 个 / 麻将鸣牌 3 个）允许换行，
+   否则会横向溢出屏幕外。主按钮保持等分，副按钮可折行。
+   v0.10.7：min-width 从 72px 降到 48px、基准从 25% 降到 20%，
+   保证斗地主出牌阶段「提示/出牌/不出/重选/智囊」+聊天键在 390px 下一行放下。 */
+.ab-ops-main { flex-wrap: wrap; }
+.actionbar .ab-ops-main .btn { flex: 1 1 calc(20% - 7px); min-width: 48px; }
+/* 牌型提示文字独占一整行，不参与按钮分配 */
+.ab-ops-main > .combo-hint { flex: 1 1 100%; order: -1; text-align: center; max-width: 100%; }
+.ab-ops-main > .wait { flex: 1 1 100%; }
+
+/* 座位环：4 人时收缩头像与姓名宽度，保证 390px 竖屏一行放得下 */
+@media (orientation: portrait) and (max-width: 480px) {
+  .ring { gap: 5px; padding: 0; }
+  .ring-seat { min-width: 0; padding: 3px 6px 2px; max-width: 88px; }
+  .ring-seat .rs-name { max-width: 62px; font-size: 10.5px; }
+  .ring-seat .rs-ava .ava,
+  .ring-seat .rs-ava > span { width: 38px !important; height: 38px !important; }
+  .ring-seat .rs-st { font-size: 9.5px; }
+  .ring.n4 .ring-seat { max-width: 84px; }
+}
+
+/* 横屏手机：横向空间充裕，操作条回到单行、按钮不拉伸 */
+@media (orientation: landscape) and (max-height: 560px) {
+  .actionbar { padding: 5px 9px; }
+  .ab-ops-main { flex: 1 1 auto; flex-wrap: nowrap; }
+  /* 关键：必须显式清掉基础规则的 flex-grow（1 1 calc(25% - 8px)），
+     否则折行后「最后一行」会被 flex-grow 撑满整行（曾出现「重选」按钮 305px 的怪相）。 */
+  .ab-ops-main > .btn,
+  .actionbar .ab-ops-main .btn {
+    flex: 0 0 auto;
+    min-width: 84px;
+    padding: 0 12px;
+  }
+  .actionbar .ab-ops-main .btn.hint { width: 76px; min-width: 76px; max-width: 76px; }
+  .actionbar .ab-ops-main .btn,
+  .actionbar .ab-ops .btn.adv { min-height: 40px; }
+  .ab-chat-toggle,
+  .actionbar .ab-ops .btn.adv { min-height: 40px !important; }
+  .ab-chat-toggle { width: 40px !important; min-width: 40px !important; }
+  /* 横屏纵向紧张：牌型提示不再独占整行，改成紧凑内联 */
+  .ab-ops-main > .combo-hint {
+    flex: 0 1 auto;
+    order: 0;
+    max-width: 96px;
+    font-size: 12px;
+    text-align: left;
+    white-space: nowrap;
+  }
+}
+
+
+
+/* ==========================================================================
+   v0.10.3 · M3 算牌面板 + M4 报牌/播报
+   ========================================================================== */
+
+/* M3 信息板（掼蛋级牌/逢人配 · 双升主牌计数） */
+.info-board {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  flex-wrap: wrap; width: 100%; padding: 0 8px;
+}
+.info-board .ib-item {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; color: var(--muted, #8e9ab5);
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px; padding: 3px 10px; white-space: nowrap;
+}
+.info-board .ib-item b { color: #ffe9a8; font-weight: 800; }
+.info-board .ib-item.dim { opacity: .55; }
+.info-board .cv {
+  display: inline-flex; flex-direction: column; align-items: center;
+  border: 1px solid rgba(255,255,255,.12); border-radius: 8px;
+  padding: 2px 10px; background: rgba(0,0,0,.3); line-height: 1.15;
+}
+.info-board .cv i { font-style: normal; font-size: 9.5px; color: rgba(255,255,255,.6); }
+.info-board .cv b { font-size: 13px; color: #dfe8ff; }
+
+/* 双升底牌回看 */
+.bottom-peek {
+  display: flex; gap: 4px; flex-wrap: wrap; align-items: center; justify-content: center;
+  width: 100%; padding: 5px 8px; margin-top: 4px;
+  background: rgba(0,0,0,.35); border: 1px dashed rgba(255,255,255,.2); border-radius: 10px;
+}
+.bottom-peek[hidden] { display: none; }
+
+/* 斗地主记牌器：可拖动浮窗 */
+.counter-bar { position: relative; z-index: 30; display: flex; justify-content: center; padding: 0 8px; }
+.counter { touch-action: none; user-select: none; cursor: grab; transition: transform .05s linear; }
+.counter.dragging { cursor: grabbing; opacity: .92; }
+.counter .cv.hot b { color: #ffb020; }
+.counter .cv.hot { border-color: rgba(255,176,32,.6); background: rgba(255,176,32,.12); }
+
+/* M4 报牌：≤2 红色脉冲（baoPulse 已有），≤5 黄色警示 */
+.oseat.warn { border-color: rgba(255,200,87,.6) !important; background: rgba(255,200,87,.1) !important; }
+.oseat.warn em { color: #ffe9a8; }
+
+/* M4 TTS 开关 + 快捷短语 */
+.actionbar .btn.tts { opacity: .55; }
+.actionbar .btn.tts.on { opacity: 1; color: #8fd0ff; border-color: rgba(120,190,255,.55); background: rgba(90,160,255,.12); }
+.chat-mini .quick-row { display: flex; gap: 6px; flex-wrap: wrap; padding: 6px 2px 2px; }
+.chat-mini .quick-chip {
+  all: unset; cursor: pointer; font-size: 11.5px; color: #cfe0ff;
+  background: rgba(79,140,255,.12); border: 1px solid rgba(79,140,255,.35);
+  border-radius: 999px; padding: 4px 11px; white-space: nowrap;
+}
+.chat-mini .quick-chip:active { transform: scale(.94); background: rgba(79,140,255,.24); }
+.chat-mini .chat-input-row { display: flex; gap: 7px; padding: 4px 2px 6px; }
+.chat-mini .chat-input-row input { flex: 1; min-width: 0; }
+
+/* 手机横屏收窄：信息板与计数器跟随压缩 */
+@media (orientation: landscape) and (max-height: 620px) {
+  .info-board .cv { padding: 1px 7px; }
+  .counter-bar { padding: 0 4px; }
+  .chat-mini .quick-chip { padding: 3px 9px; }
+}
+
+/* ==========================================================================
+   v0.10.4 操作条 + 聊天面板重构（用户第 5/6 条）
+   --------------------------------------------------------------------------
+   目标：理牌区优先，操作区"矮而稳"，聊天展开后是独立卡片而不是挤按钮。
+     · 主按钮保持 46px 触控高度、四键等分一行；
+     · 聊天/播报两个圆形小键固定在左侧 40px，不参与等分；
+     · 聊天展开时：短语横向可滑一行 + 输入框单独一行（高 44px，宽 100%），
+       不再把输入框压成 60px 宽的碎条。
+   ========================================================================== */
+.actionbar {
+  gap: 8px;
+  padding: 8px 10px calc(8px + var(--ha-sab));
+}
+.ab-ops { gap: 7px; align-items: stretch; }
+/* 左侧两个圆形工具键 */
+.actionbar .ab-chat-toggle,
+.actionbar .btn.tts {
+  flex: 0 0 40px; width: 40px; min-width: 40px;
+  min-height: 46px; padding: 0;
+  border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(120, 145, 200, .22);
+}
+/* 主操作区：四键等分，绝不换行（换行会把理牌区挤扁） */
+.ab-ops-main {
+  flex: 1 1 auto; flex-wrap: nowrap; gap: 7px; min-width: 0;
+}
+.ab-ops-main > .btn {
+  flex: 1 1 0; min-width: 0; min-height: 46px;
+  padding: 0 8px; font-size: 14px; font-weight: 700;
+  border-radius: 12px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+/* 牌型提示文字不占按钮位：挪到按钮上方的浮层 */
+.ab-ops-main > .combo-hint { display: none; }
+/* 智囊：固定宽度，金色描边，不参与等分 */
+.actionbar .ab-ops .btn.adv {
+  flex: 0 0 64px; width: 64px; min-width: 64px;
+  min-height: 46px; padding: 0 6px; font-size: 12.5px;
+  flex-direction: column; gap: 1px; line-height: 1.1;
+}
+.actionbar .ab-ops .btn.adv span { font-size: 11px; }
+
+/* 等待态：无按钮时居中显示提示，工具键靠右 */
+.actionbar:not(.has-ops) .ab-ops-main { display: flex; }
+.actionbar:not(.has-ops) .ab-ops-main .wait {
+  flex: 1; text-align: center; font-size: 13px; color: var(--muted);
+}
+
+/* ── 聊天面板：竖向两段式卡片 ── */
+.ab-chat .chat-mini {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.ab-chat .quick-row {
+  display: flex; gap: 6px; flex-wrap: nowrap;
+  overflow-x: auto; overflow-y: hidden;
+  padding: 2px 0 4px; margin: 0 -2px;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.ab-chat .quick-row::-webkit-scrollbar { display: none; }
+.ab-chat .quick-chip {
+  flex: 0 0 auto; font-size: 12px; padding: 6px 13px;
+  border-radius: 999px; line-height: 1.1;
+  color: #cfe0ff; background: rgba(79, 140, 255, .13);
+  border: 1px solid rgba(79, 140, 255, .32);
+  cursor: pointer; white-space: nowrap;
+}
+.ab-chat .quick-chip:active { background: rgba(79, 140, 255, .3); transform: scale(.96); }
+.ab-chat .chat-input-row {
+  display: flex; gap: 8px; align-items: stretch; width: 100%;
+}
+.ab-chat .chat-input-row #chat {
+  flex: 1 1 auto; min-width: 0; min-height: 44px; height: 44px;
+  background: rgba(0, 0, 0, .38);
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-radius: 12px; padding: 0 14px;
+  font-size: 14px; color: var(--fg); outline: none;
+}
+.ab-chat .chat-input-row #chat:focus { border-color: rgba(79, 140, 255, .7); }
+.ab-chat .chat-input-row #send {
+  flex: 0 0 68px; min-width: 68px; min-height: 44px; height: 44px;
+  border-radius: 12px; font-size: 13.5px; font-weight: 700;
+}
+
+/* ── 理牌区优先：给手牌让出高度 ─────────────────────────────────────── */
+@media (orientation: portrait) {
+  /* 座位环压缩到 84px 以内（头像 46 + 名字 14 + 张数 18 + 间隔） */
+  .ring { padding: 2px 0 0; gap: 6px; }
+  .ring-seat { width: 66px; }
+  .ring-seat .rs-ava { width: 42px; height: 44px; flex-basis: 44px; }
+  .ring-seat .rs-ava > .ava, .ring-seat .rs-ava > span {
+    width: 38px !important; height: 38px !important;
+  }
+  .ring-seat .rs-name { font-size: 10.5px; margin-top: 4px; max-width: 66px; }
+  .ring-seat .rs-st { font-size: 9px; padding: 0 6px; margin-top: 2px; }
+  .ring-seat .rs-st b { font-size: 11px; }
+  /* 牌桌区上下留白收紧，让手牌拿到更多高度 */
+  .table-area { padding: 2px 0 0; }
+}
+
+/* ── M4 动作播报气泡（视觉 + 语音双通道）──────────────────────────── */
+.act-bubble {
+  position: absolute; left: 50%; top: 46px; transform: translate(-50%, -6px);
+  display: inline-flex; align-items: center; gap: 7px;
+  max-width: 84%; padding: 5px 14px; border-radius: 999px;
+  font-size: 12.5px; line-height: 1.3; white-space: nowrap;
+  background: rgba(10, 16, 30, .9); border: 1px solid rgba(120, 190, 255, .5);
+  color: #dceaff; box-shadow: 0 6px 20px rgba(0, 0, 0, .5);
+  opacity: 0; pointer-events: none; z-index: 5;
+  transition: opacity .18s ease, transform .18s ease;
+  backdrop-filter: blur(8px);
+}
+.act-bubble.show { opacity: 1; transform: translate(-50%, 0); }
+.act-bubble b { color: #ffd98a; font-weight: 800; }
+.act-bubble.me { border-color: rgba(53, 214, 138, .55); }
+.act-bubble.me b { color: #7ce8b0; }
+
+/* ==========================================================================
+   M3 记牌器常驻面板（v0.10.4）
+   --------------------------------------------------------------------------
+   旧版是一条 40px 高的细条，数字 9px，玩家几乎看不见 —— 用户反馈「M3 未见体现」。
+   新版：独立面板，头部有统计（大牌剩几张 / 我方张数），牌格 15 格一行可换行，
+   数字 12px 加粗，0 张灰化并划线（一眼看出哪些牌绝了）。
+   ========================================================================== */
+.counter-bar { padding: 0 6px; }
+.counter {
+  width: 100%; max-width: 560px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 4px 8px 5px; border-radius: 12px;
+  background: linear-gradient(180deg, rgba(16, 24, 40, .92), rgba(10, 16, 28, .95));
+  border: 1px solid rgba(120, 145, 200, .26);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .05);
+}
+.counter .ct-head {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 10.5px; color: rgba(200, 214, 240, .75);
+}
+.counter .ct-t { font-weight: 800; color: #ffd98a; letter-spacing: .08em; }
+.counter .ct-k b { color: #fff; font-weight: 800; }
+.counter .ct-grip { margin-left: auto; color: rgba(200, 214, 240, .58); letter-spacing: -2px; font-size: 12px; }
+.counter .ct-body {
+  display: flex; gap: 2px; width: 100%; justify-content: space-between;
+  overflow-x: auto; scrollbar-width: none;
+}
+.counter .ct-body::-webkit-scrollbar { display: none; }
+.counter .cv {
+  /* v0.13.0（S8）15 格严格等宽。
+   * 旧版 `justify-content: space-between` + `flex: 1 1 0` 在内容宽度不一时
+   * 会各让一点，王格被挤到 14px 而数字格 24px，整行看着是歪的。
+   * 现在固定 flex-basis: 0 / flex-grow: 1 且禁止收缩，宽度只由容器决定。 */
+  flex: 1 1 0; min-width: 0; max-width: none;
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+  border: 1px solid rgba(255, 255, 255, .1); border-radius: 5px;
+  padding: 1px 0; background: rgba(0, 0, 0, .3); line-height: 1.15;
+  overflow: hidden;
+}
+.counter .cv i { font-style: normal; font-size: 9.5px; color: rgba(255, 255, 255, .7); white-space: nowrap; }
+.counter .cv b { font-size: 12.5px; font-weight: 800; color: #e6eeff; white-space: nowrap; }
+.counter .cv.cv-w i { color: rgba(255, 214, 138, .8); font-weight: 800; }
+.counter .cv.gone { opacity: .34; }
+.counter .cv.gone b { text-decoration: line-through; }
+.counter .cv.last { border-color: rgba(255, 200, 87, .6); background: rgba(255, 200, 87, .16); }
+.counter .cv.last b { color: #ffd98a; }
+.counter .cv.hot { border-color: rgba(255, 140, 60, .65); background: rgba(255, 120, 40, .16); }
+.counter .cv.hot b { color: #ffb070; }
+
+/* ── v0.20.0（R8-1）记牌器精修：优雅和谐 ───────────────────────────
+ * 用户反馈「优化记牌器显示效果，务必优雅和谐」：
+ *   ① 根因修复：ui-games.js `class="cv${cls}"` 缺空格导致带状态格子
+ *     失去盒子样式（本条只做视觉层，根因在模板处）。
+ *   ② 头部统计（大牌剩/我N张）药丸化，与标题形成层次而不是一排裸字。
+ *   ③ 15 格按牌组加呼吸间距：3~10｜J~K｜A~2｜双王，扫读更快。
+ *   ④ 绝牌（0 张）格子降低存在感但保留格子轮廓，不与「出完了」混淆。 */
+.counter .ct-k {
+  padding: 1px 9px; border-radius: 999px;
+  background: rgba(255, 255, 255, .07);
+  border: 1px solid rgba(255, 255, 255, .09);
+}
+.counter .ct-k b { color: #ffe9a8; }
+.counter .cv[data-v="11"], .counter .cv[data-v="15"], .counter .cv[data-v="16"] { margin-left: 5px; }
+.counter .cv.gone { border-color: rgba(255, 255, 255, .05); background: rgba(0, 0, 0, .16); }
+.counter .cv.gone i { text-decoration: line-through; opacity: .75; }
+
+/* 掼蛋信息板：与记牌器同风格，横向三块 */
+.info-board { margin: 0 0 2px; }
+.info-board .ib-item {
+  font-size: 11px; padding: 3px 9px;
+  background: rgba(16, 24, 40, .85); border-color: rgba(120, 145, 200, .26);
+}
+.info-board .cv { background: rgba(16, 24, 40, .85); }
+
+/* ============================================================================
+ * v0.10.10 操作条窄屏收敛（从 style.css 迁来：本文件后加载，需在此覆盖）
+ * ----------------------------------------------------------------------------
+ * 实测 393×684 视口：操作条可用宽 351px，而
+ *   聊天36 + 语音36 + 主操作区 + 智囊64 + 4×gap
+ * 主操作区 4 个按钮（不要/1分/2分/3分）各 58px + 3 gap = 250px
+ * → 智囊被挤到第二行，操作条 71px 变 123px，抢走牌桌高度。
+ * 收紧要内边距 + 智囊定宽，使其一行放下。
+ */
+.actionbar .ab-ops { flex-wrap: wrap; row-gap: 6px; gap: 6px; }
+.actionbar .ab-ops-main { flex-wrap: wrap; row-gap: 6px; }
+.actionbar .ab-ops .ab-chat-toggle,
+.actionbar .ab-ops .tts { flex: 0 0 36px; width: 36px; min-width: 36px; padding: 0; }
+@media (max-width: 460px) {
+  .actionbar .ab-ops { gap: 5px; }
+  .actionbar .ab-ops-main { gap: 5px; }
+  .actionbar .ab-ops-main > .btn { padding: 0 6px; font-size: 12.5px; min-width: 0; }
+  .actionbar .ab-ops .btn.adv {
+    flex: 0 0 58px; width: 58px; min-width: 58px;
+    min-height: 46px; padding: 0 4px;
+  }
+  .actionbar .ab-ops .btn.adv span { font-size: 10.5px; }
+}
+
+/* ============================================================================
+ * v0.10.11 下半区信息面板里的聊天：尺寸收敛（必须放在本文件末尾）
+ * ----------------------------------------------------------------------------
+ * 上面 `.ab-chat .chat-input-row #chat { min-height: 44px; height: 44px }`
+ * 用了 ID 选择器，优先级高于 style.css 里的 `.info-card.chat-card ... #chat`？
+ * 不 —— 但本文件后加载，同级 specificity 时后者胜出，而 #chat 的 ID 选择器
+ * 本身 specificity 更高（1,1,0 vs 0,3,0），所以 style.css 里的规则赢不了。
+ * 结果：面板聊天输入框仍是 44px 高、发送键 68px 宽，在 125px 宽的栏里
+ * 直接把 chat-log 挤成 0 高度。
+ * 解法：用同等 ID 级别的选择器在此处覆盖（后加载 + 更具体的前缀）。
+ * —— 这条也写进了《原生边界检查表》的「样式加载顺序」一节。
+ * ========================================================================== */
+.info-panel .ab-chat .chat-input-row #chat {
+  min-height: 30px; height: 30px;
+  padding: 0 9px; font-size: 11.5px; border-radius: 9px;
+}
+.info-panel .ab-chat .chat-input-row #send {
+  flex: 0 0 42px; min-width: 42px; height: 30px; min-height: 30px;
+  border-radius: 9px; font-size: 11.5px; font-weight: 600;
+}
+.info-panel .ab-chat .chat-input-row { gap: 5px; align-items: center; }
+.info-panel .ab-chat .quick-chip { padding: 3px 8px; font-size: 10.5px; border-radius: 9px; }
+.info-panel .chat-log { font-size: 10.5px; line-height: 1.5; }
+
+/* ============================================================================
+ * v0.10.11 信息面板窄屏收敛（≤420px）—— v0.16.0 起规则上移为 ≤620px
+ * ----------------------------------------------------------------------------
+ * 实测 360×640：三栏各约 100px，「牌桌聊天」标题折行、「胜3·和1」徽标折行、
+ * 名字全部省略号，可读性崩了。窄屏改两段式：
+ *   上段 = 战绩 + 积分并排（各占一半，滚动）
+ *   下段 = 聊天整行（标题不折行）
+ *
+ * v0.16.0：同样的结论在 480×1120 也成立（三栏 → 聊天仅 144px），
+ * 所以断点从 420 提到 620，主排布定义在 style.css（含 grid-template-areas）。
+ * 这里只保留「窄屏内部细节收敛」，不再重复写列/行/区域，避免两处打架。
+ * ========================================================================== */
+@media (max-width: 620px) {
+  /* 标题与徽标不折行 */
+  .info-card > .ic-hd { padding: 4px 7px 2px; gap: 4px; }
+  .info-card > .ic-hd b { font-size: 10.5px; white-space: nowrap; }
+  .info-card > .ic-hd .ic-badge { font-size: 9px; padding: 1px 4px; white-space: nowrap; }
+  .ist-list, .rank-list { padding: 0 6px 4px; }
+  .ist-row { grid-template-columns: 10px minmax(0, 1fr) 36px; gap: 4px; }
+  .ist-row .ist-nm { font-size: 10px; }
+  .rank-row { grid-template-columns: 15px minmax(0, 1fr) auto; gap: 4px; padding: 2px 0; }
+  .rank-row .rk-no { width: 14px; height: 14px; line-height: 14px; font-size: 9px; }
+  .rank-row .rk-nm { font-size: 10px; }
+  .rank-row .rk-pt { font-size: 11px; }
+  /* 窄屏「牌局数据」卡隐藏：竖屏走牌桌左上角浮层形态（insightFloat） */
+  .info-panel > .info-card.ins-card { display: none; }
+}
+
+/* 极窄（≤360）：上段战绩/积分再压，聊天占更大比例 */
+@media (max-width: 360px) {
+  .ist-row .ist-nm { font-size: 9.5px; }
+}
+
+/* ============================================================================
+ * v0.10.11 信息面板窄屏高度补偿
+ * ----------------------------------------------------------------------------
+ * 窄屏（≤420）三栏改两段后，聊天整行 + 上面两张卡，132px 不够用：
+ * 实测 360×640 聊天输入行被裁掉一半。
+ * 但把 info 抬到 168px 后牌桌只剩 53px（640 高的机器太吃紧）。
+ * 最终取 150px，可接受；用户也可点「战绩」折叠把整段让给牌桌。
+ *
+ * v0.16.0（R4-9b）：删掉原来「聊天记录压成 18px 单行 + 横滑」那条。
+ * 它跟前身的问题是同一个：为了省高度把**功能**砍掉——
+ *   · `max-height:18px` + `overflow-y:hidden` 让记录区只剩一行半，
+ *     「谁说了什么」第二条起全看不到；
+ *   · `display:flex; white-space:nowrap; overflow-x:auto` 把聊天记录
+ *     变成横向长条，新消息追加在右侧而视口停在最左，等于永远看不到最新一句；
+ *   · `> div { flex: 0 0 auto }` 与 `.cl-row` 的 flex 布局冲突，
+ *     说话人名字与内容被拆成两个 flex item 横着排。
+ * 现在聊天卡占整行、分组短语只占 74px，记录区实际能分到 ≥20px 并随卡片
+ * 高度增长（.chat-log 为 flex:1 1 auto，min-height:20px），
+ * 保留纵向滚动 + 自动滚底，这才是「聊天记录」应有的行为。
+ * ========================================================================== */
+@media (max-width: 620px) {
+  /* v0.16.0（R4-9e）：信息面板轨道高度按可用视口重算。
+   * 旧值 `clamp(150px, 25vh, 190px)` 是为「三栏 + 单行短语」定的；
+   * 现在聊天卡占一整行，内容是「分组标签 24 + 短语 2 行 50 + 表情 30 +
+   * 记录 ≥2 行 ≈ 34 + 输入 40 + 卡内间距 ≈ 12」≈ 190px，
+   * 再加大屏富余，取 `clamp(188px, 30vh, 268px)`：
+   *   · 640 高的机器：30vh=192 → 188~192px，牌桌仍有 ~380px；
+   *   · 915/1120 高的机器：30vh=274/336 → 封顶 268px，
+   *     记录区能显示 6~8 行，聊天真正可用。 */
+  .card-room, .mahjong-room, .ext-room {
+    grid-template-rows: minmax(0, 1fr) clamp(188px, 30vh, 268px);
+  }
+  .card-room.info-collapsed, .mahjong-room.info-collapsed, .ext-room.info-collapsed,
+  .card-room:has(.info-panel.collapsed), .mahjong-room:has(.info-panel.collapsed),
+  .ext-room:has(.info-panel.collapsed) {
+    grid-template-rows: minmax(0, 1fr) 30px;
+  }
+  /* 聊天记录窄屏：纵向滚动、自动滚底，优先拿高度 */
+  .info-panel .chat-log {
+    overflow-y: auto; overflow-x: hidden;
+    padding: 2px 8px 3px;
+    word-break: break-word;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* v0.16.0（R4-9f）空间不足时，让「短语 / 表情」让步，而不是记录区。
+   * 短语是入口（点一次就发出去，不需要常看），记录是内容（必须能读）。
+   * 用 order + 收缩优先级实现：快捷区可收缩、记录区不可收缩。 */
+  .info-panel .chat-mini .qk-tabs { flex: 0 1 auto; min-height: 22px; }
+  .info-panel .chat-mini .quick-row:not(.emote-row) { flex: 0 1 auto; }
+  .info-panel .chat-mini .quick-row.emote-row { flex: 0 1 auto; }
+  .info-panel .chat-mini .chat-input-row { flex: 0 0 auto; }
+}
+
+/* ============================================================================
+ * v0.10.11 横屏两列版式（**必须放在文件最末**）
+ * ----------------------------------------------------------------------------
+ * 排障记录：上面 `@media (orientation: landscape) and (max-height: 560px)` 段里
+ * 虽然已经把 `.card-room > .room-main` 改成两列，但**本文件第 589 行**还有一条
+ * 无条件规则：
+ *      .card-room > .room-main { grid-template-rows: auto auto minmax(0,1fr) ... }
+ * 它在大括号段之外、位于横屏媒体查询**之后**，特异度同为 (0,2,0) 且源码更晚，
+ * 于是横屏两列模板被单列六轨整段覆盖 —— 实测 844×390 下 `.room-main` 的
+ * computed gridTemplateAreas 仍是 `"head" "seats" "table" "counter" "hand" "actions"`，
+ * 手牌被排到牌桌下方，牌桌只剩 47px。
+ *
+ * 结论（已写入《原生边界检查表》第 3 章）：**横屏覆盖必须放在同源文件最末**，
+ * 因为 CSS 里没有「后置媒体查询优先级更高」这回事，只有源码顺序。
+ * ========================================================================== */
+@media (orientation: landscape) and (max-height: 560px) {
+  /* v0.10.19：与上面横屏段保持一致 —— 右侧主区单列纵向。
+   * 这一段是历史遗留的第二份横屏规则（后定义、会覆盖前面的），
+   * 之前写的是「table | hand」两列 + 强制隐藏 info。
+   * 改为单列后手牌回到牌桌下方，info 交给左栏显示。 */
+  .card-room > .room-main,
+  .mahjong-room > .room-main {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto minmax(46px, auto);
+    grid-template-areas:
+      "head"
+      "seats"
+      "table"
+      "counter"
+      "acts";
+    column-gap: 0;
+    row-gap: 2px;
+  }
+  /* v0.10.19：横屏 info 面板**不再隐藏**，它是左栏的主内容。
+   * 原规则 `.room.card-room > .info-panel:not(.collapsed) { display:none }`
+   * 是「横屏只留牌桌」时代的产物，现在删掉；收起态由 .collapsed 自己处理。 */
+  /* 手牌右列竖向居中、牌桌主区压满 */
+  .card-room > .room-main > .table-area,
+  .mahjong-room > .room-main > .table-area {
+    padding: 0;
+    gap: 2px;
+    min-height: 0;
+  }
+  .card-room > .room-main > .table-area > .table,
+  .mahjong-room > .room-main > .table-area > .table {
+    flex: 1 1 auto;
+    min-height: 70px;
+    max-height: none;
+  }
+  .card-room > .room-main > .hand-area,
+  .mahjong-room > .room-main > .hand-area {
+    align-self: center;
+    padding-top: 0;
+    margin-top: 0;
+    min-height: 60px;
+  }
+  .card-room > .room-main > .actionbar,
+  .mahjong-room > .room-main > .actionbar {
+    grid-area: acts;
+    padding: 4px 9px;
+    align-self: end;
+  }
+  .card-room > .room-main > .room-head,
+  .mahjong-room > .room-main > .room-head {
+    grid-area: head;
+    padding: 2px 10px;
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+}
+
+/* ============================================================================
+ * v0.10.11 横屏操作条单行化
+ * ----------------------------------------------------------------------------
+ * 实测 844×390 双升：
+ *   .ab-ops / .ab-ops-main 的 computed flex-wrap 都是 wrap（继承自本文件
+ *   横屏段的 `.ab-ops-main { flex: 1 1 auto; flex-wrap: nowrap }` 之前还有一条
+ *   `.ab-ops-main { display:flex; gap }` 未声明 wrap，浏览器默认 nowrap，
+ *   但 `.suit-row` 自身 width 444px > 容器 442px → 溢出触发行内换行，
+ *   结果操作条高 193px、牌桌只剩 16px。
+ *
+ * 修法：横屏下彻底锁死单行 —— wrap:nowrap + 按钮按钮 flex:0 0 auto +
+ * 花色按钮压缩到 34px + 高度 40px。牌桌优先。
+ * ========================================================================== */
+@media (orientation: landscape) and (max-height: 560px) {
+  .card-room > .room-main > .actionbar,
+  .mahjong-room > .room-main > .actionbar,
+  .ext-room > .room-main > .actionbar {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px calc(4px + var(--ha-sab));
+    min-height: 0;
+    max-height: 58px;
+    overflow: hidden;
+  }
+  .card-room .actionbar > .ab-ops,
+  .mahjong-room .actionbar > .ab-ops,
+  .ext-room .actionbar > .ab-ops {
+    flex-wrap: nowrap;
+    gap: 6px;
+    min-width: 0;
+    height: 100%;
+  }
+  .card-room .actionbar .ab-ops-main,
+  .mahjong-room .actionbar .ab-ops-main,
+  .ext-room .actionbar .ab-ops-main {
+    flex-wrap: nowrap;
+    gap: 6px;
+    height: 100%;
+    min-width: 0;
+  }
+  .card-room .actionbar .ab-ops-main > .btn,
+  .mahjong-room .actionbar .ab-ops-main > .btn,
+  .ext-room .actionbar .ab-ops-main > .btn,
+  .card-room .actionbar > .ab-ops > .btn,
+  .mahjong-room .actionbar > .ab-ops > .btn {
+    flex: 0 0 auto;
+    min-width: 0;
+    height: 40px;
+    min-height: 40px;
+    padding: 0 10px;
+    font-size: 13px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+  /* 花色选择行：横屏压成紧凑横排，不再撑满 */
+  .card-room .actionbar .suit-row,
+  .mahjong-room .actionbar .suit-row,
+  .ext-room .actionbar .suit-row {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    width: auto;
+    gap: 4px;
+  }
+  .card-room .actionbar .suit-row > .btn,
+  .mahjong-room .actionbar .suit-row > .btn,
+  .ext-room .actionbar .suit-row > .btn {
+    flex: 0 0 auto;
+    min-width: 34px;
+    width: 34px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    font-size: 15px;
+    border-radius: 9px;
+  }
+  /* 智囊/语音小按钮也压到 40px */
+  .card-room .actionbar .btn.tts,
+  .mahjong-room .actionbar .btn.tts,
+  .card-room .actionbar .btn.adv,
+  .mahjong-room .actionbar .btn.adv,
+  .ext-room .actionbar .btn.adv {
+    height: 40px;
+    min-height: 40px;
+    padding: 0 9px;
+  }
+  .card-room .actionbar .btn.adv > span:not(.ic),
+  .mahjong-room .actionbar .btn.adv > span:not(.ic) { display: none; }
+}
+
+/* ============================================================================
+ * v0.10.11 横屏棋盘房间（board-room）纵向收敛
+ * ----------------------------------------------------------------------------
+ * 实测 844×390 五子棋：`document.body.scrollHeight - innerHeight = 19px`，
+ * 即页面整体竖向溢出 19px（底部操作条被切掉一条）。
+ * 原因：棋盘 `.board.gomoku` 在 style.css 横屏段写 `width: min(58vh, 380px)`，
+ * 58vh = 226px 宽，棋盘是 aspect-ratio:1 的正方形 → 高也是 226px；
+ * 加上头部 38 + 状态条 + 操作条 58 后超过 390。
+ *
+ * 修法：横屏棋盘宽度按**剩余高度**算，而不是按 58vh 拍脑袋。
+ * 用 min(52vh, 360px) 给操作条/头部留出确定空间。
+ * ========================================================================== */
+@media (orientation: landscape) and (max-height: 560px) {
+  /* v0.26.0（R14-1）：五子/围棋/象棋撤出本簇（width 直写与 --bw 脱钩），
+   * 交回 .room.board-room 的 --bw 覆盖体系；chess/reversi/connect4 无
+   * 交叉点几何，保留旧定宽。 */
+  .board-room .board.chess,
+  .board-room .board.reversi,
+  .board-room .board.connect4 {
+    width: min(50vh, 340px);
+    max-height: calc(100vh - 150px);
+  }
+  .board-room .c4-cols { width: min(50vh, 340px); }
+  .board-room > .room-main { gap: 2px; }
+  .board-room .table-area { padding: 2px 0; gap: 3px; min-height: 0; }
+  .board-room .status { font-size: 11.5px; padding: 2px 10px; }
+}
+
+/* ============================================================================
+ * v0.10.11 竖屏高屏收敛：牌桌「中间空一块」+ 统计卡被裁
+ * ----------------------------------------------------------------------------
+ * 实测 412×915 麻将：
+ *   · .table-area 轨道拿到 394px，而 .table 自身 max-height 只有 min(30vh,220px)
+ *     → 上下各留 ~87px 空白，视觉上牌桌像悬在中间的空洞；
+ *   · 下半区三卡总高 190px，其中「牌友战绩」「本房积分」各占 1fr，
+ *     实际可用 ~120px，第 3 行被裁掉半行，读不出数据。
+ *
+ * 修法：
+ *   ① info 轨道从 clamp(132px, 24vh, 176px) 提到 clamp(150px, 26vh, 210px)，
+ *      高屏给统计留足 3 行；
+ *   ② 牌桌区居中改为「偏向中上」，把富余空白留给下方而不是上下均分。
+ * ========================================================================== */
+@media (orientation: portrait) and (min-height: 700px) {
+  .card-room, .mahjong-room, .ext-room {
+    grid-template-rows: minmax(0, 1fr) clamp(150px, 26vh, 210px);
+  }
+  .card-room.info-collapsed, .mahjong-room.info-collapsed, .ext-room.info-collapsed,
+  .card-room:has(.info-panel.collapsed),
+  .mahjong-room:has(.info-panel.collapsed),
+  .ext-room:has(.info-panel.collapsed) {
+    grid-template-rows: minmax(0, 1fr) 30px;
+  }
+  /* 牌桌区：保持居中（改 flex-start 会让牌桌与记牌器之间露出明显空隙，
+     实测反而更难看）。改为让牌桌自己长高到把富余吃掉一部分。 */
+  .card-room .table-area,
+  .mahjong-room .table-area { justify-content: center; }
+  /* 牌桌最大高度松一档：原来 min(30vh,220px) 在 915 高屏只给 220px，
+     而轨道有 ~390px —— 这才是「牌桌悬空」的真因。提到 34vh/260px。 */
+  .card-room .table-area > .table,
+  .mahjong-room .table-area > .table { max-height: min(34vh, 260px); }
+  /* 统计卡内部行高略松，配合 info 轨道加高后可完整显示 3~4 行 */
+  .ist-row { padding: 2px 0; }
+  .rank-row { padding: 2px 0; }
+}
+
+/* ============================================================================
+ * v0.10.11 竖屏 info 面板三卡配比修正
+ * ----------------------------------------------------------------------------
+ * 实测 412×915 麻将：面板总高 210px，三栏等宽。问题在于
+ *   「牌友战绩」「本房积分」的正文区只有 ~150px，
+ *   4 个座位 × 20px 行高 + 标题 22px = 102px 理论够，但实际
+ *   `.ist-row` 的 `.ist-val` 内部 `0/0 分0` 与进度条争高，行被撑到 30px，
+ *   于是第 4 行被 `.ist-list` 的 overflow 裁掉。
+ *
+ * 修法（不动总高，只改内部）：
+ *   ① `.ist-val` 两行紧凑化，`i` 字号降到 8.5px、行高 1.1；
+ *   ② 统计卡正文 flex:1 + overflow-y:auto 已有，再给 padding-bottom 留出
+ *      滚动余量，最后一行不会被切一半；
+ *   ③ 聊天卡在竖屏不再抢等宽，改为窄列（0.9fr），把宽度让给两张统计卡。
+ * ========================================================================== */
+.info-panel .ist-val {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0;
+  line-height: 1.05;
+}
+.info-panel .ist-val b { font-size: 11px; line-height: 1.1; }
+.info-panel .ist-val i { font-size: 8.5px; line-height: 1.1; font-style: normal; opacity: .72; white-space: nowrap; }
+.info-panel .ist-list { padding-bottom: 10px; }
+.info-panel .rank-list { padding-bottom: 10px; }
+.info-panel .ist-row { min-height: 17px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * v0.16.0（R4-9b）竖屏信息面板列宽：**统一由 style.css 裁决**
+ * ---------------------------------------------------------------------------
+ * 这里原本有一条 `(orientation: portrait) and (min-height: 700px)` 的
+ * `grid-template-columns: 1.15fr 0.95fr 1fr`，配合 style.css 主规则的三栏比例，
+ * 在 480×1120 这类"竖屏但够高"的设备上把聊天卡压到 144px（短语 3 列每列 42px，
+ * 一句完整话都放不下，输入框只能显示 6 个字）。
+ *
+ * 窄屏该不该三栏，判据只有一个：**面板实际宽度够不够三栏都呈现可用内容**。
+ * 620px 以下再怎么分都是每栏 ~145px，不如两段式（战绩|积分 一行 + 聊天整行）。
+ * 所以竖屏列宽交回 style.css 的 `@media (orientation: portrait) and (max-width: 620px)`
+ * 一条规则说了算，这里不再重复定义，避免两处比例互相打架。
+ * 仅保留"聊天日志吃满剩余高度"这条与列宽无关的行为。
+ * ═══════════════════════════════════════════════════════════════════════════ */
+@media (orientation: portrait) and (min-height: 700px) {
+  /* 聊天卡正文给足，输入行不悬空 */
+  .info-panel .chat-log { max-height: none; flex: 1 1 auto; }
+}
+
+/* ============================================================================
+ * v0.10.11 竖屏 info 面板：战绩行横向改版 + 聊天卡底部不裁
+ * ----------------------------------------------------------------------------
+ * 实测 412×915：`0%` 与 `0/0 分0` 上下挤在同一 40px 列里，字叠在一起；
+ * 聊天卡的输入行 `#chat` + 发送按钮被卡片底边切掉一半。
+ *
+ * 改法：
+ *   ① 战绩行改成「左名字 / 右百分比」两列，`wins/games 分points` 不再竖排
+ *      堆在百分比下面，而是变成同一行的灰色小字（第 3 列）。
+ *   ② 聊天卡底部预留 4px，输入行固定 30px 不被压缩（flex: 0 0 30px）。
+ * ========================================================================== */
+.info-panel .ist-row {
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  row-gap: 1px;
+  column-gap: 5px;
+}
+.info-panel .ist-row .ist-seat { grid-row: 1 / span 2; grid-column: 1 / 2; }
+.info-panel .ist-row .ist-nm   { grid-row: 1 / 2; grid-column: 2 / 3; }
+.info-panel .ist-row .ist-val  { grid-row: 1 / 2; grid-column: 3 / 4; flex-direction: row; gap: 3px; align-items: baseline; }
+.info-panel .ist-row .ist-bar  { grid-row: 2 / 3; grid-column: 2 / 4; }
+.info-panel .ist-row .ist-val i { display: none; }   /* 明细移出，避免与 % 争宽 */
+
+/* 聊天卡：输入行固定高度，正文可滚 */
+.info-card.chat-card .ic-bd { padding-bottom: 4px; }
+.info-card.chat-card .ab-chat .chat-input-row {
+  flex: 0 0 auto;
+  min-height: 30px;
+}
+.info-card.chat-card .ab-chat .quick-row {
+  flex: 0 0 auto;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+.info-card.chat-card .ab-chat .quick-row::-webkit-scrollbar { display: none; }
+
+/* ============================================================================
+ * v0.10.11 竖屏聊天卡：三段装不下 → 只留「日志 + 输入」
+ * ----------------------------------------------------------------------------
+ * 实测 412×915：聊天卡正文区 ~150px，而「快捷语行 26px + 日志 40px +
+ * 输入行 30px + 间距 12px = 108px」理论够，但快捷语 6 个 chip 在 1fr 窄列
+ * 里全部换行成 2 行（52px），于是总高 134px 溢出，输入框被切掉。
+ *
+ * 结论：竖屏窄列里快捷语没有存在价值（横屏宽列才放得下）。
+ * 竖屏直接隐藏 `.quick-row`，把高度全部让给日志与输入。
+ * ========================================================================== */
+@media (orientation: portrait) and (max-width: 620px) {
+  .info-panel .ab-chat .quick-row { display: none; }
+  .info-panel .chat-log { flex: 1 1 auto; min-height: 22px; max-height: none; }
+  .info-panel .ab-chat .chat-input-row { padding-top: 4px; }
+  /* 输入框与发送按钮并排，按钮不被压缩 */
+  .info-panel .ab-chat .chat-input-row #chat { flex: 1 1 auto; min-width: 0; }
+  .info-panel .ab-chat .chat-input-row #send { flex: 0 0 46px; min-width: 46px; }
+}
+
+/* ============================================================================
+ * v0.10.11 竖屏聊天卡快捷语隐藏（特异度修正）
+ * ----------------------------------------------------------------------------
+ * 上一段的 `.info-panel .ab-chat .quick-row { display:none }` 特异度是 (0,3,0)，
+ * 而 style.css:579 的
+ *      `.info-card.chat-card .chat-mini .quick-row { display:flex; ... }`
+ * 是 **(0,4,0)** —— 高一级，且那条规则无条件生效，所以 display:none 一直输。
+ * 这是本轮第二次栽在「类数量算错一级」上（第一次是 `.room.card-room`）。
+ *
+ * 现按 (0,5,0) 重写，确保压过一切既有规则。
+ * ========================================================================== */
+/* ═══════════════════════════════════════════════════════════════════════════
+   v0.16.0（R4-9）竖屏短语口袋：2×3 等宽格，不再横滑
+   ---------------------------------------------------------------------------
+   历史三版走过的弯路，记录在此避免再犯：
+     · v0.10.11 竖屏 `display:none` 隐藏短语 —— 砍功能，用户明确反对；
+     · v0.10.21 改回 `display:flex; flex-wrap:nowrap` 横滑 24px 单行
+       —— 一屏只能看见 1.5 句，剩下全靠盲滑，趣味性短语等于没有；
+     · v0.16.0 起改用分组标签 + 2 行 × 3 列等宽格（见 style.css `.qk-tabs`），
+       6 句同时可见，纵向只占 2×24 + 3 = 51px，比「标题 + 横滑条」只多 27px，
+       而竖屏聊天卡此时已有 ~150px 正文区，装得下。
+
+   因此这里**必须整体退场**：旧规则带 `!important` + `flex-wrap:nowrap`，
+   与 style.css 的 `display:grid` 混用会让 3 列格塌成竖排窄条（实测 132px）。
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (orientation: portrait) and (max-width: 620px) {
+  /* 日志区把剩余高度全部吃掉 */
+  .info-panel .info-card.chat-card .ab-chat .chat-log {
+    flex: 1 1 auto;
+    min-height: 20px;
+    max-height: none;
+  }
+  /* 表情行仍然横滑单行（表情是"更多"语义，横滑合理）
+   * v0.16.0（R4-9e）：高度锁定 30px。默认 .emote-chip 是 34×34，
+   * 加上行内 padding 实测占 37px —— 在 150~190px 高的聊天卡里，
+   * 「短语 50 + 表情 37 + 标签 24 + 输入 40」= 151px，记录区只剩个位数。
+   * 表情是氛围性内容，优先级低于「看得见谁说了什么」，压到 28px 更划算。 */
+  .info-panel .info-card.chat-card .ab-chat .chat-mini .quick-row.emote-row {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    height: 30px;
+    min-height: 30px;
+    max-height: 30px;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 0;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .info-panel .info-card.chat-card .ab-chat .chat-mini .quick-row.emote-row .emote-chip {
+    width: 28px; height: 26px; min-height: 26px;
+    font-size: 15px; border-radius: 8px;
+    box-sizing: border-box;
+  }
+  .info-panel .info-card.chat-card .ab-chat .chat-mini .quick-row.emote-row::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+
+/* ============================================================================
+ * v0.10.11 竖屏高屏：把牌桌区富余高度转给下半区
+ * ----------------------------------------------------------------------------
+ * 实测 412×915：`.room-main` 的 table 轨道拿到 374px，而 `.table` 自身
+ * max-height 上限 260px —— 上下各空 57px 纯背景，视觉上是「牌桌悬在中间」。
+ * 而下方 info 面板只有 190px，聊天记录只能显示 1 行。
+ *
+ * 这是典型的「高度分配错配」：富余高度全给了 1fr 的 table 轨道，
+ * 但 table 内部有硬上限吃不下。
+ *
+ * 修法：牌桌轨道改为 `minmax(0, auto)` 语义不好控，直接给 info 面板加高，
+ * 用「牌桌区不吸收全部富余」的方式 —— 在 grid 里给 table 轨道上限，
+ * 余量自动流向 info（info 用 auto 时会吸收）。这里显式写：
+ *     rows: auto auto minmax(0, min(374px, 42vh)) auto auto + info 1fr
+ * 实现上更稳的做法是让 info 轨道也参与分配，用 minmax 让两者都能长。
+ * ========================================================================== */
+@media (orientation: portrait) and (min-height: 760px) {
+  .card-room, .mahjong-room, .ext-room {
+    /* 上半 1fr、下半 minmax(210px, 0.32fr)：让富余高度按 68:32 分配，
+       而不是全部堆在牌桌轨道里变成空白。
+       v0.16.0（R4-9e）：0.42fr → 0.5fr、下限 210 → 240。
+       聊天卡改成占整行 + 分组短语后需要 ≥190px 才不挤，
+       0.42 在 1120 高的机器上只给到 325px（含上面战绩/积分两卡 84px 后
+       聊天只剩 202px，记录区仅两行）。0.5 给到 ≈390px，
+       聊天 ≈266px，记录区可显示 6 行以上，同时牌桌仍占一半。 */
+    grid-template-rows: minmax(0, 1fr) minmax(240px, 0.5fr);
+  }
+  .card-room.info-collapsed, .mahjong-room.info-collapsed, .ext-room.info-collapsed,
+  .card-room:has(.info-panel.collapsed),
+  .mahjong-room:has(.info-panel.collapsed),
+  .ext-room:has(.info-panel.collapsed) {
+    grid-template-rows: minmax(0, 1fr) 30px;
+  }
+  /* 牌桌上限提到 38vh，与更高的桌面匹配 */
+  .card-room .table-area > .table,
+  .mahjong-room .table-area > .table { max-height: min(38vh, 300px); }
+  /* 排版松一档 */
+  .info-panel .ist-row { min-height: 20px; }
+  .info-panel .ist-row .ist-nm { font-size: 11px; }
+  .info-panel .rank-row { padding: 3px 0; }
+  .info-panel .ab-chat .chat-log { min-height: 34px; }
+}
+
+/* ============================================================================
+ * v0.10.11 竖屏「本房积分」卡名字被省略
+ * ----------------------------------------------------------------------------
+ * 实测 412×915：积分行显示成 `玩家04 (...`。
+ * 原因：`.rank-row` 三列是 `18px minmax(0,1fr) auto`，
+ * 而 `.rk-pt`（如 `0分`）和「（我）」后缀挤占大量宽度，
+ * 名字列被压缩到只够 5 个字。
+ *
+ * 修法：① 行号缩到 15px；② 「（我）」在竖屏改为只显示「我」两个字符的短标；
+ *       ③ 分数字号降一档，让名字列喘气。
+ * ========================================================================== */
+@media (orientation: portrait) and (max-width: 620px) {
+  .info-panel .rank-row { grid-template-columns: 15px minmax(0, 1fr) auto; gap: 4px; }
+  .info-panel .rank-row .rk-no { width: 14px; height: 14px; line-height: 14px; font-size: 9px; }
+  .info-panel .rank-row .rk-nm { font-size: 10.5px; }
+  .info-panel .rank-row .rk-pt { font-size: 11px; white-space: nowrap; }
+  .info-panel .rank-row .rk-pt small { font-size: 8.5px; }
+  /* 战绩卡同理：名字列优先 */
+  .info-panel .ist-row { grid-template-columns: 11px minmax(0, 1fr) auto; }
+  .info-panel .ist-row .ist-nm { font-size: 10.5px; }
+  .info-panel .ist-row .ist-val b { font-size: 10.5px; }
+}
+
+/* v0.10.11：窄屏「（我）」改为只显示「我」，把宽度还给名字。
+   用 ::after + font-size:0 隐藏原文字再重写，避免改 JS 输出结构。
+   v0.10.20：必须做成**独立胶囊**并留左边距。原来只是改字，
+   缩成「我」之后紧贴名字，读起来是「游客885我」—— 名字被污染了。 */
+.info-panel .me-tag { font-style: normal; color: var(--rp-gold); }
+/* v0.10.20：人机标记从 emoji 🤖 改成内联 SVG。
+   原因：Android WebView / 鸿蒙 WebView 缺 emoji 字体时渲染成豆腐块「□」，
+   截图里就是「□ 小强」—— 看起来像「这个人头像坏了」。SVG 跟字体无关，三端一致。 */
+.info-panel .ai-tag,
+.ai-tag {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 13px; height: 13px; margin-right: 3px; vertical-align: -2px;
+  border-radius: 4px;
+  color: #8fb4ff;
+  background: rgba(120, 165, 255, .14);
+  box-shadow: inset 0 0 0 1px rgba(120, 165, 255, .3);
+}
+.ai-tag svg { width: 9px; height: 9px; }
+@media (max-width: 620px) {
+  .info-panel .me-tag {
+    font-size: 0;
+    display: inline-block;
+    margin-left: 4px;
+    padding: 0 4px;
+    vertical-align: 1px;
+    border-radius: 4px;
+    background: rgba(255, 215, 110, .16);
+    box-shadow: inset 0 0 0 1px rgba(255, 215, 110, .38);
+  }
+  .info-panel .me-tag::after { content: "我"; font-size: 8.5px; line-height: 12px; }
+  .info-panel .me-tag::before { content: ""; display: none; }
+}
+
+/* ============================================================================
+ * v0.10.12  结算条 .vote-bar（继续 / 换桌）
+ * ----------------------------------------------------------------------------
+ * 位置：挂在 section.room 上。棋盘类（board-room）没有下半区面板，
+ * 仍用 absolute 覆盖；牌类/麻将/外部游戏在 v0.13.0 起改为**占 grid 一行**
+ * （见下方 S7 段落），因为绝对定位会压住战绩面板。
+ * ========================================================================== */
+.vote-bar {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--info-h, 0px) + 10px);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: rgba(14, 20, 34, .94);
+  border: 1px solid rgba(120, 150, 210, .28);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .5);
+  backdrop-filter: blur(14px);
+  animation: vbIn .22s ease-out;
+}
+@keyframes vbIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.vote-bar .vb-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.vote-bar .vb-res {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #ffd76e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vote-bar .vb-round {
+  font-size: 11px;
+  color: #8fa2c0;
+  white-space: nowrap;
+}
+.vote-bar .vb-count {
+  font-size: 10.5px;
+  color: #7d8ea8;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .06);
+  white-space: nowrap;
+}
+.vote-bar .vb-acts {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+}
+.vote-bar .vb-acts .btn {
+  height: 36px;
+  min-height: 36px;
+  padding: 0 16px;
+  font-size: 12.5px;
+  font-weight: 700;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+/* 已经有人选「换桌」：整条转警示色，暗示这局不会继续 */
+.vote-bar.will-switch {
+  border-color: rgba(255, 140, 120, .46);
+  background: rgba(40, 20, 22, .94);
+}
+.vote-bar.will-switch .vb-res { color: #ff9f8a; }
+
+/* 窄屏：结果与按钮上下排，避免名字被挤成省略号 */
+@media (max-width: 420px) {
+  .vote-bar {
+    left: 8px; right: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 7px;
+    padding: 8px 10px;
+  }
+  .vote-bar .vb-acts { justify-content: flex-end; }
+  .vote-bar .vb-acts .btn { flex: 1 1 0; padding: 0 8px; }
+  .vote-bar .vb-res { font-size: 12.5px; }
+}
+/* 横屏：结算条压扁，别挡住牌桌 */
+@media (orientation: landscape) and (max-height: 560px) {
+  .vote-bar {
+    bottom: 6px;
+    padding: 5px 9px;
+    border-radius: 10px;
+  }
+  .vote-bar .vb-acts .btn { height: 30px; min-height: 30px; padding: 0 12px; font-size: 11.5px; }
+  .vote-bar .vb-res { font-size: 11.5px; }
+  .vote-bar .vb-round { font-size: 10px; }
+}
+
+/* v0.10.12：`.vote-bar` 用 absolute 覆盖，需要 `.room` 作为定位上下文。
+ * 只加 relative，不动 display/grid，不影响现有分区。 */
+.card-room, .mahjong-room, .ext-room, .board-room { position: relative; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * v0.13.0（S7）结算条进轨道：牌类 / 麻将 / 外部游戏
+ * --------------------------------------------------------------------------
+ * 病象（v0.12.0 实测截图）：一局打完，「继续 / 换桌」只露出上半截，
+ * 下半截被「牌桌聊天」压住，还有一条 toast 糊在上面。
+ *
+ * 病根：v0.10.12 的设计里它靠 `bottom: calc(var(--info-h, 0px) + 10px)`
+ * 让位给下半区面板，但 **--info-h 全项目没有任何一处赋值**（grep 只有这一行）。
+ * 于是兜底值 0 生效 → bottom = 10px → 正好压在 132~176px 高的战绩面板上。
+ *
+ * 修法：既然 .room 已经是 grid（main / info / vote 三行），
+ * 就让它老实占第三行。结算时牌桌已经空了，缩掉这 50px 完全无损；
+ * 而「能不能点继续」是硬需求，不能靠 z-index 遮着面板来凑。
+ * 棋盘类没有 info 面板，继续保留 absolute（见上，不受影响）。
+ * ══════════════════════════════════════════════════════════════════════════ */
+.card-room > .vote-bar,
+.mahjong-room > .vote-bar,
+.ext-room > .vote-bar {
+  position: static;
+  left: auto; right: auto; bottom: auto;
+  grid-area: vote;
+  margin: 0;
+  padding: 6px 10px;
+  animation: vbIn .22s ease-out;
+}
+/* 结算条出现时，它自己吃掉底部安全区（info 面板此时不再需要额外的下边距） */
+.card-room:has(> .vote-bar) > .info-panel,
+.mahjong-room:has(> .vote-bar) > .info-panel,
+.ext-room:has(> .vote-bar) > .info-panel { padding-bottom: 0; }
+.card-room > .vote-bar,
+.mahjong-room > .vote-bar,
+.ext-room > .vote-bar { padding-bottom: calc(6px + var(--ha-sab)); }
+
+/* ============================================================================
+ * v0.10.13 外部游戏（H5 / Cocos）房间独立版式
+ * ----------------------------------------------------------------------------
+ * 用户截图病象：游戏画面被挤成 220×282 瘦条、座位环掉到画面下方、
+ * 操作条插在中间把上下都截断、战绩恒为 0 局。
+ *
+ * 病根（检查表 3.3 的同类事故，第二次踩）：
+ *   G.external 复用了棋牌的 .ring，它声明 `grid-area: seats`；
+ *   但 `.ext-room > .room-main` 的模板只有 head/table/actions 三条轨道。
+ *   CSS Grid 遇到模板里不存在的命名区域会**自动生成隐式轨道**接管它 ——
+ *   实测 room-main 算出 5 条轨道：46 / 324.8 / 63 / 0 / 174.2，
+ *   座位环独占 174px 隐式行、并把内容列撑到 156px 宽，
+ *   table 轨道被压窄到 236px（画面 220×282，960×540 只露出左上角）。
+ *
+ * 因此这里彻底换掉轨道模型，不再与棋牌共用：
+ *   ① room-main 只保留「头 + 舞台」两条轨道，舞台独占 1fr；
+ *   ② 座位 / 状态 / 房号全部改为**覆盖在画面上**的浮层，不占任何轨道；
+ *   ③ 浮层可一键淡出（沉静模式），把画面完整让给游戏本身。
+ *
+ * 注意：以下规则必须放在本文件最末（检查表 3.2 / 3.6），
+ * 否则会被上方同优先级的 .ext-room 规则吃掉。
+ * ========================================================================== */
+
+/* 1) 轨道：head + 舞台，舞台吃满剩余高度。
+ *    不再定义 seats / hand 区域 —— 模板里没有，就不可能有隐式轨道。 */
+.ext-room > .room-main {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "head"
+    "stage"
+    "actions";
+  gap: 0;
+  padding: 0;
+}
+
+/* 2) 任何残留的 .ring / .hand-area 都必须彻底消失（选择器不再用 `>`，
+ *    避免再次出现「规则写了但匹配不上」的静默失败）。 */
+.ext-room .ring,
+.ext-room .hand-area,
+.ext-room .seatring-wrap,
+.ext-room .table-area { display: none !important; }
+
+/* 3) 舞台：铺满整个 stage 轨道，无内边距，让 canvas 拿到最大面积 */
+.ext-room .ext-stage {
+  grid-area: stage;
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: #08111a;
+  display: block;
+}
+.ext-room .ext-frame {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  border: 0; display: block;
+  background: #08111a;
+}
+
+/* 4) 房间头：单行、不外移出轨道，标题省略 */
+.ext-room .ext-head {
+  grid-area: head;
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px;
+  min-height: 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  background: linear-gradient(180deg, rgba(20,30,44,.96), rgba(14,22,34,.92));
+}
+.ext-room .ext-head .ext-name {
+  flex: 1 1 auto; min-width: 0;
+  font-size: 13.5px; font-weight: 700; color: #e8f0fb;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ext-room .ext-head .ext-code {
+  flex: 0 0 auto; font-size: 11px; padding: 1px 7px; border-radius: 8px;
+  background: rgba(110,180,255,.14); color: #8fc4ff; border: 1px solid rgba(110,180,255,.32);
+  font-variant-numeric: tabular-nums;
+}
+.ext-room .ext-head .ext-engine-tag {
+  flex: 0 0 auto; font-size: 10px; padding: 1px 7px; border-radius: 8px;
+  background: rgba(255,215,110,.13); color: #ffd76e; border: 1px solid rgba(255,215,110,.36);
+}
+.ext-room .ext-head .info-toggle {
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: 4px;
+  height: 26px; padding: 0 9px; border-radius: 9px;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+  color: #cfe0f5; font-size: 12px; cursor: pointer;
+}
+.ext-room .ext-head .info-toggle .it-arrow { transition: transform .18s ease; }
+.ext-room .ext-head .info-toggle.off .it-arrow { transform: rotate(-90deg); }
+
+/* 5) 浮层 HUD：状态徽章（左上）+ 座位胶囊（右上），覆盖在画面上。
+ *    v0.10.13 二次修正：初版把两者放在同一行横排，4 个座位胶囊换行后
+ *    HUD 撑到 60px 高、横跨整个画面顶部，把第一格游戏内容整条挡住。
+ *    改为**左右分列**：状态贴左上（单行不换行），座位贴右上（最多两行、
+ *    每枚胶囊超宽即省略），中间区域始终留给游戏。 */
+.ext-room .ext-hud {
+  position: absolute; left: 0; right: 0; top: 0;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 6px; padding: 6px 8px;
+  pointer-events: none;              /* 默认不吃事件，让点击穿透到 canvas */
+  z-index: 4;
+  transition: opacity .2s ease, transform .2s ease;
+}
+/* v0.10.13 三次修正：HUD 默认只显示「胶囊本体」，把状态文字收起。
+ *   外部游戏的画面构图由包自己决定，很多包会把内容顶到画面上沿
+ *   （测试包含 960×540 canvas、真机上的 Cocos 包同样如此），
+ *   常驻一条横贯的状态栏必然压住第一行内容。
+ *   改为：只重复留座位胶囊 + 一个「⋯」信息钮；
+ *   需要看房号/引擎/就位人数时点胶囊区即展开，点画面其它位置收起。
+ *   这样画面默认零遮挡，信息仍然一键可达（可感知性不降级）。 */
+.ext-room .ext-hud .status {
+  opacity: 0; transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+  max-width: 0; overflow: hidden; padding-left: 0; padding-right: 0;
+  border-width: 0;
+}
+.ext-room .ext-stage.hud-open .ext-hud .status {
+  opacity: 1; transform: none;
+  pointer-events: auto;
+  max-width: 60vw; padding: 6px 10px; border-width: 1px;
+}
+/* 展开时给整条 HUD 加一层轻底，避免文字叠在花哨画面上读不清 */
+.ext-room .ext-stage.hud-open .ext-hud {
+  background: linear-gradient(180deg, rgba(6,12,20,.82), rgba(6,12,20,0));
+  padding-bottom: 14px;
+}
+.ext-room .ext-hud .status,
+.ext-room .ext-hud .ext-seats { pointer-events: auto; }
+
+.ext-room .ext-hud .status {
+  flex: 0 0 auto;
+  font-size: 11.5px; line-height: 1;
+  padding: 6px 10px; border-radius: 999px;
+  background: rgba(8,17,26,.72); color: #b8cde4;
+  border: 1px solid rgba(255,255,255,.1);
+  backdrop-filter: blur(6px);
+  white-space: nowrap;
+}
+.ext-room .ext-seats {
+  flex: 0 1 auto;
+  display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px;
+  max-width: 52%;
+  cursor: pointer;
+}
+.ext-room .ext-chip {
+  display: inline-flex; align-items: center; gap: 3px;
+  height: 22px; padding: 0 7px 0 3px; border-radius: 999px;
+  background: rgba(8,17,26,.74); border: 1px solid rgba(255,255,255,.1);
+  backdrop-filter: blur(6px);
+  font-size: 10.5px; color: #c9dcf0;
+  max-width: 88px;
+}
+.ext-room .ext-chip b {
+  font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ext-room .ext-chip .ec-ava {
+  flex: 0 0 auto; width: 18px; height: 18px; border-radius: 50%;
+  display: grid; place-items: center; overflow: hidden;
+  background: rgba(255,255,255,.1); font-size: 10px; color: #8fa8c4;
+}
+.ext-room .ext-chip .ec-ava svg { width: 18px; height: 18px; display: block; }
+.ext-room .ext-chip.me { border-color: rgba(110,200,255,.5); color: #d6f0ff; }
+.ext-room .ext-chip.empty { opacity: .55; border-style: dashed; }
+.ext-room .ext-chip.ai { border-color: rgba(160,140,255,.34); }
+
+/* 6) 浮层开关钮：右下角小圆点，始终可见但不抢眼 */
+.ext-room .ext-hud-pin {
+  position: absolute; right: 8px; bottom: 8px; z-index: 6;
+  width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(8,17,26,.62); border: 1px solid rgba(255,255,255,.14);
+  color: #9fb6cd; font-size: 13px; line-height: 1; cursor: pointer;
+  opacity: .55; transition: opacity .18s ease, background .18s ease;
+}
+.ext-room .ext-hud-pin:hover,
+.ext-room .ext-hud-pin:active { opacity: 1; background: rgba(20,40,60,.9); }
+
+/* 7) 沉静模式：浮层整块淡出，画面完整让给游戏 */
+.ext-room .ext-stage.hud-off .ext-hud {
+  opacity: 0; transform: translateY(-6px); pointer-events: none;
+}
+.ext-room .ext-stage.hud-off .ext-hud .status,
+.ext-room .ext-stage.hud-off .ext-hud .ext-seats { pointer-events: none; }
+
+/* 7.5) v0.23.0（R11-2）同房比分赛面板：挂在画面右上、默认收起，
+ *      不与座位胶囊抢位（座位胶囊在右上时面板盖在下面一层，z-index 更高）。 */
+.ext-room .ext-match {
+  position: absolute; top: 34px; right: 8px; z-index: 7;
+  width: min(300px, 86vw);
+  max-height: min(70%, 420px);
+  display: none;
+  overflow: auto;
+  background: rgba(10,20,32,.94);
+  border: 1px solid rgba(120,180,255,.22);
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(0,0,0,.45);
+  backdrop-filter: blur(8px);
+  color: #cfe0f2;
+}
+.ext-room .ext-match.open { display: block; }
+.ext-room .ext-match .em-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 12px 7px; font-size: 13px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  position: sticky; top: 0; background: rgba(10,20,32,.96);
+}
+.ext-room .ext-match .em-x {
+  background: none; border: 0; color: #8fa8c4; font-size: 17px; line-height: 1;
+  cursor: pointer; padding: 2px 6px;
+}
+.ext-room .ext-match .em-bd { padding: 9px 12px 12px; }
+.ext-room .ext-match .em-tip { font-size: 11.5px; color: #93a9c0; margin: 2px 0 8px; line-height: 1.5; }
+.ext-room .ext-match .em-lb { font-size: 11px; color: #93a9c0; margin: 6px 0 5px; }
+.ext-room .ext-match .em-rounds { display: flex; gap: 6px; }
+.ext-room .ext-match .em-meta { font-size: 10.5px; color: #7e94ab; margin: 4px 0 7px; }
+.ext-room .ext-match .em-row {
+  display: flex; align-items: center; gap: 7px;
+  padding: 5px 6px; border-radius: 8px; font-size: 12px;
+}
+.ext-room .ext-match .em-row.me { background: rgba(90,170,255,.12); }
+.ext-room .ext-match .em-row .em-rk {
+  flex: 0 0 16px; height: 16px; border-radius: 50%; font-size: 10px; font-style: normal;
+  display: grid; place-items: center; background: rgba(255,255,255,.1); color: #9fb6cd;
+}
+.ext-room .ext-match .em-row:first-child .em-rk { background: rgba(255,196,70,.28); color: #ffd98a; }
+.ext-room .ext-match .em-row .em-nm { flex: 0 0 auto; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ext-room .ext-match .em-row .em-rds { flex: 1 1 auto; display: flex; flex-wrap: wrap; gap: 3px; }
+.ext-room .ext-match .em-row .em-rds u {
+  text-decoration: none; font-size: 10px; padding: 1px 5px; border-radius: 6px;
+  background: rgba(255,255,255,.09); color: #bcd2e8;
+}
+.ext-room .ext-match .em-row .em-rds u.todo { background: none; color: #5c7288; letter-spacing: 1px; }
+.ext-room .ext-match .em-row .em-tt { flex: 0 0 auto; font-size: 13px; font-weight: 700; color: #ffd98a; }
+.ext-room .ext-match .em-champ {
+  margin: 2px 0 8px; padding: 7px 10px; border-radius: 9px; font-size: 12.5px;
+  background: linear-gradient(90deg, rgba(255,196,70,.16), rgba(255,196,70,.04));
+  border: 1px solid rgba(255,196,70,.3); color: #ffe3a6;
+}
+.ext-room .ext-match .em-add { display: flex; gap: 6px; margin-top: 9px; }
+.ext-room .ext-match .em-add input {
+  flex: 1 1 auto; min-width: 0; height: 30px; padding: 0 9px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.16); background: rgba(0,0,0,.28); color: #e6f0fa; font-size: 12.5px;
+}
+.ext-room .ext-match .em-foot {
+  display: flex; align-items: center; justify-content: space-between; margin-top: 9px; gap: 6px;
+}
+.ext-room .ext-match .em-cfg { display: flex; gap: 4px; }
+.ext-room .ext-match .em-cfg .btn.on { border-color: rgba(110,200,255,.55); color: #d6f0ff; }
+
+/* 8) 操作条：外部游戏只需要「语音 / 智囊」这类少量按钮，
+ *    压成一行且不抢高度；有 info 面板时它仍在 stage 之下。 */
+.ext-room > .room-main > .actionbar { grid-area: actions; }
+.ext-room .actionbar { flex: 0 0 auto; }
+
+/* 9) 窄屏（≤420）与横屏的低高度情形：
+ *    外部游戏优先保画面，战绩面板默认更矮，用户可点「战绩」折叠收起。 */
+@media (max-width: 420px) {
+  .ext-room { grid-template-rows: minmax(0, 1fr) clamp(132px, 22vh, 168px); }
+  .ext-room:has(.info-panel.collapsed) { grid-template-rows: minmax(0, 1fr) 30px; }
+  .ext-room .ext-hud { padding: 6px 8px; gap: 6px; }
+  .ext-room .ext-seats { max-width: 58%; gap: 4px; }
+  .ext-room .ext-chip { height: 22px; font-size: 10.5px; max-width: 78px; }
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  /* 横屏横空间充足：战绩面板变成右侧竖条，画面拿满左侧 */
+  .ext-room {
+    grid-template-columns: minmax(0, 1fr) 220px;
+    grid-template-rows: 1fr;
+    grid-template-areas: "main info";
+  }
+  .ext-room > .room-main { grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "head" "stage"; }
+  .ext-room > .room-main > .actionbar { display: none; }
+  .ext-room .info-panel {
+    grid-area: info; height: 100%; max-height: none;
+    border-left: 1px solid rgba(255,255,255,.07); border-top: 0;
+  }
+  .ext-room:has(.info-panel.collapsed) { grid-template-columns: minmax(0, 1fr) 30px; }
+}
+
+/* ============================================================================
+ * v0.10.13 彩头（底分）设置 UI
+ * ----------------------------------------------------------------------------
+ * 用户诉求：开局前可设彩头数额，参考主流档位，且能自由改。
+ * 设计要点：
+ *   ① 档位 chip 一排（1/2/5/10/20/50/100/200/500/1000），点一下即选，符合「常见档位」；
+ *   ② 右侧自由输入框，任何时候都能改成任意整数 —— 档位只是快捷方式，不是限制；
+ *   ③ 二者双向联动：点档位写入输入框，改输入框高亮匹配档位；
+ *   ④ 记住上次选择（localStorage），下一桌沿用，不用每局重设。
+ * ========================================================================== */
+.bet-box {
+  border: 1px solid rgba(255, 255, 255, .08);
+  background: rgba(255, 255, 255, .03);
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 9px;
+}
+.bet-box .bet-hd {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+}
+.bet-box .bet-hd span { font-size: 13px; font-weight: 700; color: #e2ecf8; }
+.bet-box .bet-hd em { font-size: 11px; font-style: normal; color: #7f93aa; }
+.bet-chips {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.bet-chip {
+  flex: 1 1 auto; min-width: 46px;
+  height: 32px; padding: 0 8px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: rgba(255, 255, 255, .04);
+  color: #c3d5e8; font-size: 12.5px; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.bet-chip:active { transform: scale(.97); }
+.bet-chip.on {
+  background: linear-gradient(180deg, rgba(212, 175, 55, .28), rgba(212, 175, 55, .16));
+  border-color: rgba(212, 175, 55, .72);
+  color: #ffe9a6;
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, .22) inset;
+}
+.bet-custom {
+  display: flex; align-items: center; gap: 8px;
+}
+.bet-custom .ipt { flex: 1 1 auto; height: 34px; text-align: center; font-variant-numeric: tabular-nums; }
+.bet-custom .bet-unit { flex: 0 0 auto; font-size: 12px; color: #8fa4bb; }
+
+/* 房间头的彩头徽章：与房号同族视觉，但用鎏金强调「这桌的约定」 */
+.room-head .rm-bet {
+  flex: 0 0 auto;
+  font-size: 11px; padding: 1px 7px; border-radius: 8px;
+  background: rgba(212, 175, 55, .16);
+  color: #ffd76e;
+  border: 1px solid rgba(212, 175, 55, .42);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@media (max-width: 420px) {
+  .bet-chip { min-width: 40px; height: 30px; font-size: 12px; }
+  .room-head .rm-bet { font-size: 10.5px; padding: 1px 6px; }
+}
+
+/* ============================================================================
+ * v0.10.13 记牌器窄屏溢出修复
+ * ----------------------------------------------------------------------------
+ * 实测 360×640（最小主流机型）记牌器右侧「大王」被裁掉 3px。
+ * 病根：.counter .cv 同时有 flex:1 1 0 与 max-width:30px。
+ *   max-width 不参与 flex 收缩计算 —— 浏览器先按 basis=0 分配，再各自涨到
+ *   30px 封顶，于是「15 格 × 30 + 14 × 2px gap = 478px」这个**内容固有宽度**
+ *   超过了 340px 的容器，flex 无法再压，只好溢出。
+ * 解法：去掉 max-width，改成 max-width:none + 由容器均分；
+ *   gap 用 clamp 随屏宽收缩；每格加 min-width:0 允许无限压缩。
+ * 同时把「小/大 王」两格的边距略收，保证 15 格在 360px 下仍单行不裁。
+ * ========================================================================== */
+.counter { gap: clamp(1px, 0.4vw, 2px); }
+.counter .cv {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;              /* 关键：解除 30px 上限，让 flex 真正能压缩 */
+}
+/* 360px 以下的极限机型：字号再降一档，保证 15 格仍在单行内 */
+@media (max-width: 375px) {
+  .counter .cv i { font-size: 7.5px; }
+  .counter .cv b { font-size: 9.5px; }
+  .counter { padding-left: 1px; padding-right: 1px; }
+}
+
+/* ============================================================================
+ * v0.10.13 横屏牌类/麻将版式重做（844×390 实测）
+ * ----------------------------------------------------------------------------
+ * 上一版（v0.10.11）在横屏把 room-main 拆成两列：
+ *     head    | (通栏)
+ *     seats   | (通栏)
+ *     table   | hand
+ *     counter | hand
+ *     acts    | hand
+ * 本意是「手牌放右边不抢牌桌高度」。实测结论相反：
+ *   · 右侧手牌列只有 354px 宽、60px 高，17 张牌被压成两行小牌，几乎看不清；
+ *   · 左侧牌桌被压到 462px 宽，还不如竖屏；
+ *   · 五条轨道合计 346px，距容器 355px 只剩 9px，多一个元素就溢出
+ *     （象棋/四子棋实测竖向溢出 72px / 11px）。
+ *
+ * 新模型（横屏 = 宽 > 高，横向空间富余，纵向极紧张）：
+ *   ① 座位环压成**单行小头像**（横屏宽度足够，不需要两行）；
+ *   ② 牌桌吃掉剩余高度，高度下限收紧；
+ *   ③ 手牌**横铺全宽**、单行叠压（宽度 824px 时 17 张完全放得下）；
+ *   ④ 算牌器压到 34px，操作条压到 44px；
+ *   ⑤ 维度计算留出安全余量，任何游戏都不再竖向溢出。
+ * 单列从上到下：head / seats / table / counter / hand / acts。
+ * ========================================================================== */
+@media (orientation: landscape) and (max-height: 560px) {
+  /* 只作用于牌类与麻将；棋盘类沿用各自的满屏方案，不在此列 */
+  .room.card-room > .room-main,
+  .room.mahjong-room > .room-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+    grid-template-areas:
+      "head"
+      "seats"
+      "table"
+      "counter"
+      "hand"
+      "acts";
+    gap: 2px;
+    overflow: hidden;
+  }
+  /* ① 座位单行：横屏横向富余，不必两层 */
+  .room.card-room .ring,
+  .room.mahjong-room .ring {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 4px;
+    min-height: 0;
+    height: auto;
+  }
+  .room.card-room .ring .ring-seat,
+  .room.mahjong-room .ring .ring-seat { flex: 0 0 auto; }
+  /* 头像缩到 34px，名字与张数并到一行，整环高度不超过 52px */
+  .room.card-room .ring .rs-ava,
+  .room.mahjong-room .ring .rs-ava { --sz: 34px !important; width: 34px; height: 34px; }
+  .room.card-room .ring .rs-ava svg,
+  .room.mahjong-room .ring .rs-ava svg { width: 34px; height: 34px; }
+  .room.card-room .ring .rs-name,
+  .room.mahjong-room .ring .rs-name { font-size: 10.5px; margin-top: 1px; }
+  .room.card-room .ring .rs-st,
+  .room.mahjong-room .ring .rs-st { font-size: 10px; margin-top: 0; }
+
+  /* ② 牌桌：吃掉剩余高度，但设下限防止被压成一条线 */
+  .room.card-room .table-area,
+  .room.mahjong-room .table-area { min-height: 72px; }
+  .room.card-room .table-area > .table,
+  .room.mahjong-room .table-area > .table { margin-block: auto; }
+
+  /* ③ 手牌横铺全宽、单行叠压（宽度足够，不换行） */
+  .room.card-room .hand-area,
+  .room.mahjong-room .hand-area {
+    min-height: 0;
+    padding: 0 6px;
+  }
+  .room.card-room .hand.two-row .hand-row,
+  .room.mahjong-room .hand.two-row .hand-row { flex-wrap: nowrap !important; }
+
+  /* ④ 算牌器与操作条压扁 */
+  .room.card-room .counter-bar,
+  .room.mahjong-room .counter-bar { padding: 0; }
+  .room.card-room .counter .cv,
+  .room.mahjong-room .counter .cv { padding: 0; }
+  .room.card-room .counter .cv i,
+  .room.mahjong-room .counter .cv i { font-size: 8px; line-height: 1; }
+  .room.card-room .counter .cv b,
+  .room.mahjong-room .counter .cv b { font-size: 10px; line-height: 1.05; }
+  .room.card-room > .room-main > .actionbar,
+  .room.mahjong-room > .room-main > .actionbar { min-height: 0; }
+}
+
+/* ---- v0.10.13 横屏座位卡片压成微型胶囊（续上节 ①） ---------------------
+ * 上一批规则只改了头像尺寸，但 .ring-seat 本身是「padding 7/11 + min-width 78
+ * + 三行文字」的卡片，实测仍占 93px 高 —— 横屏 390px 总高下这是不可接受的。
+ * 这里把它压成 46px 的横排胶囊：头像 28 + 名字/张数并排。 */
+@media (orientation: landscape) and (max-height: 560px) {
+  .room.card-room .ring .ring-seat,
+  .room.mahjong-room .ring .ring-seat {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 4px 5px;
+    min-width: 0;
+    border-radius: 999px;
+  }
+  .room.card-room .ring .rs-ava,
+  .room.mahjong-room .ring .rs-ava { --sz: 28px !important; width: 28px; height: 28px; flex: 0 0 auto; }
+  .room.card-room .ring .rs-ava svg,
+  .room.mahjong-room .ring .rs-ava svg { width: 28px; height: 28px; }
+  /* 名字与张数改成同一行的两段，不再各占一行 */
+  .room.card-room .ring .rs-name,
+  .room.mahjong-room .ring .rs-name { font-size: 11px; margin: 0; max-width: 56px; line-height: 1.1; }
+  .room.card-room .ring .rs-st,
+  .room.mahjong-room .ring .rs-st { font-size: 10px; margin: 0; line-height: 1.1; }
+  .room.card-room .ring .rs-st b,
+  .room.mahjong-room .ring .rs-st b { font-size: 11px; }
+  /* 地主/阵营小标签缩小，避免撑高 */
+  .room.card-room .ring .rs-lord,
+  .room.mahjong-room .ring .rs-lord,
+  .room.card-room .ring .rs-team,
+  .room.mahjong-room .ring .rs-team { font-size: 8.5px; padding: 0 3px; }
+
+  /* 操作条：把「智囊」这类次要按钮压窄，避免被挤到边缘只剩空框 */
+  .room.card-room > .room-main > .actionbar .btn.adv,
+  .room.mahjong-room > .room-main > .actionbar .btn.adv {
+    flex: 0 0 auto; width: auto; min-width: 0;
+    padding: 0 10px; height: 40px;
+  }
+  /* v0.10.13 修正：原来写的是 `.btn.adv span { display:none }` ——
+   * 但图标本体也是 span（`<span class="ic"><svg/></span>`），
+   * 于是「隐藏文字」变成了「把图标一起藏掉」，按钮只剩一个 22px 空框。
+   * 必须只命中**文字**那个 span：`:not(.ic)`。 */
+  .room.card-room > .room-main > .actionbar .btn.adv > span:not(.ic),
+  .room.mahjong-room > .room-main > .actionbar .btn.adv > span:not(.ic) { display: none; }
+  .room.card-room > .room-main > .actionbar .ab-ops,
+  .room.mahjong-room > .room-main > .actionbar .ab-ops { flex: 1 1 auto; min-width: 0; }
+}
+
+
+/* ============================================================================
+ * v0.10.14 横屏棋盘房间（board-room）左右分栏 —— 按真实 DOM 结构重写
+ * ----------------------------------------------------------------------------
+ * 实测 844×390（象棋）：
+ *   1) 房间宽度只有 404px。父级 main 是横向 flex，`.room` 的 `flex: 1 1 0%`
+ *      按内容定基准，拿不到全宽 —— 必须写 `flex-basis: 100%`。
+ *   2) 结构是 `<section.room.board-room>` 直接挂
+ *      `.room-head / .ring / .table-area / .actionbar`，**没有 .room-main**。
+ *      早期写的 `> .room-main` 选择器全部落空，浏览器自动生成 4 条隐式轨道，
+ *      纵向堆叠 46+0+262+63=371px，超过可用高度 → 硬溢出。
+ *
+ * 正确版式（横着用屏）：
+ *   ┌────────────── head（通栏）──────────────┐
+ *   ├──── board（1fr，双向受限于高度）────┬ side（≤232px）─┤
+ *   │                                     │ ring           │
+ *   │                                     │ actionbar      │
+ *   └─────────────────────────────────────┴────────────────┘
+ * 注意：本节必须在文件最末 —— 1541~1553 行有同优先级的旧「纵向收敛」规则。
+ * ========================================================================== */
+@media (orientation: landscape) and (max-height: 560px) {
+  .room.board-room {
+    display: grid;
+    /* 吃满视口宽度：父级是横向 flex，必须显式给 basis */
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) minmax(176px, 232px);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      "head head"
+      "board side";
+    gap: 4px 6px;
+    padding: 3px 8px 4px;
+    overflow: hidden;
+  }
+
+  .room.board-room > .room-head { grid-area: head; }
+
+  /* 棋盘占左列，跨越右列两行的高度 */
+  .room.board-room > .table-area {
+    grid-area: board;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  /* 座位环 + 操作条收进右列，纵向叠放 */
+  .room.board-room > .ring,
+  .room.board-room > .seatring-wrap {
+    grid-area: side;
+    align-self: start;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+    min-height: 0;
+  }
+  .room.board-room > .actionbar {
+    grid-area: side;
+    align-self: end;
+    flex-wrap: wrap;
+    max-height: none;
+    min-height: 0;
+    padding: 2px 0 calc(2px + var(--ha-sab));
+    overflow: visible;
+  }
+
+  /* 棋盘等比缩放：让**高度**吃满 board-wrap，宽度由 aspect-ratio 反算，
+     再用 max-width/max-height 兜住。这样不同屏高都不用重算 calc。
+     注意 .board 自身是 grid 容器，height:100% 需要父级有确定高度 —— wrap 是 flex + height:100%，满足。 */
+  .room.board-room .board-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+  }
+  .room.board-room .board {
+    flex: 0 1 auto;
+    margin: 0 auto;
+    max-height: 100%;
+    max-width: 100%;
+  }
+  /* 正方形棋盘（四子棋/黑白棋/五子棋/国际象棋/围棋） */
+  /* 四子棋 7:6（列:行），列按钮行还要占自身高度 */
+  /* 四子棋 7:6（列:行）。列按钮行约 30px 高，棋盘从 100% 里扣掉这部分。 */
+  .room.board-room .board.connect4 {
+    width: auto;
+    height: calc(100% - 32px);
+    max-height: calc(100% - 32px);
+    aspect-ratio: 7 / 6;
+  }
+  .room.board-room .board.reversi,
+  .room.board-room .board.gomoku,
+  .room.board-room .board.chess,
+  .room.board-room .board.go {
+    /* v0.25.0（R13-1）：横屏尺寸由 --bw 决定（宽 = 可用高），不再
+     * width:auto/height:100% —— 五子棋/围棋的半格 padding 公式引用
+     * --bw，必须让 --bw 反映真实渲染宽，否则交叉点错位。170px =
+     * 横屏 head/状态/操作/安全区合计的实测余量。 */
+    --bw: min(46vw, calc(100vh - 96px));
+  }
+  /* 象棋 10:11（v0.25.0 交叉点对齐：9×10 交点 + 四周半格留白） */
+  .room.board-room .board.xiangqi {
+    --bw: min(46vw, calc((100vh - 96px) * 10 / 11));
+    aspect-ratio: 10 / 11;
+  }
+  .room.board-room .board.xiangqi .pc {
+    min-width: 0; min-height: 0;
+    font-size: clamp(13px, 3.6vh, 26px);
+  }
+  /* 四子棋列按钮行：宽度必须和棋盘（7:6）一模一样，否则按钮与列位错开。
+     棋盘高 = 100% - 32px，宽 = 高 × 7/6；这里用同一算式。 */
+  .room.board-room .c4-cols {
+    width: min(calc((100vh - 78px - 32px) * 7 / 6), 100%);
+    grid-template-columns: repeat(7, 1fr);
+    flex: 0 0 auto;
+    align-self: center;
+  }
+  .room.board-room .board.connect4 { margin-top: 0; }
+  .room.board-room canvas { max-width: 100%; max-height: 100%; }
+
+  /* 座位压成微型胶囊，横排 */
+  .room.board-room .ring { flex-direction: row; flex-wrap: wrap; }
+  .room.board-room .ring-seat {
+    flex: 0 0 auto; min-width: 0;
+    flex-direction: row; align-items: center;
+    padding: 2px 8px 2px 2px; gap: 5px;
+  }
+  .room.board-room .ring-seat .rs-ava { --sz: 24px !important; width: 24px; height: 24px; flex: 0 0 24px; }
+  .room.board-room .ring-seat .rs-ava .ava { width: 24px; height: 24px; }
+  .room.board-room .ring-seat .rs-ava .rs-turn { display: none; }
+  .room.board-room .ring-seat .rs-name { font-size: 10.5px; max-width: 54px; }
+  .room.board-room .ring-seat .rs-st { font-size: 9.5px; gap: 2px; }
+
+  /* 操作条按钮缩小 */
+  .room.board-room > .actionbar > .ab-ops,
+  .room.board-room > .actionbar > .ab-ops-main { flex-wrap: wrap; gap: 4px; min-width: 0; }
+  .room.board-room > .actionbar .btn { height: 32px; min-height: 32px; font-size: 12px; padding: 0 8px; }
+
+  .room.board-room .status { font-size: 11px; padding: 1px 8px; }
+  .room.board-room .vote-bar {
+    position: absolute; left: 50%; bottom: 6px;
+    transform: translateX(-50%); max-width: 92%;
+  }
+}
+
+/* ============================================================================
+ * v0.10.15 竖屏棋盘：让棋盘吃满可用宽度，垂直居中
+ * ----------------------------------------------------------------------------
+ * 实测 420×900（四子棋）：.table-area 高 697px，而 .board-wrap 里棋盘只有
+ * 338px —— 上下各空 160px，像「中间挖了个洞」。
+ * 根因：style.css 里棋盘宽度是 min(88vw, 460px)=369px，而容器实际有 400px
+ * 可用；高度则完全没用上 661px 的 wrap 空间。
+ * 修法：宽度以容器宽度为基准（100% - 内边距），高度按宽高比自动；wrap 用
+ * space-between 之外的方式居中，避免大片死白。
+ * ========================================================================== */
+/* ═══════════════════════════════════════════════════════════════════════════
+ * v0.26.0（R14-1）交叉点棋盘尺寸统一纪律
+ * --------------------------------------------------------------------------
+ * 复盘：v0.25.0 只把横屏段改成了覆盖 --bw，但竖屏段（下一条媒体查询）
+ * 仍直写 width: min(100%,460px)、强制横屏段直写 width:auto;height:100%
+ * —— 两者特异性都压过 style.css 的 width: var(--bw)，导致 --bw 与真实
+ * 渲染宽脱钩，半格 padding 公式失效、交叉点漂移（竖屏漂移最多 ~5px，
+ * 用户「棋子不在线上」的体感来源之一）。
+ * 新纪律：五子棋/围棋/象棋这三块交叉点板，**任何地方只允许覆盖 --bw，
+ * 不允许直写 width/height**；样式里用 cqw 让 --bw 精确等于 wrap 宽
+ * （board-wrap 已设 container-type: inline-size，旧内核回退 100%）。
+ * ═══════════════════════════════════════════════════════════════════════════ */
+.room.board-room .board-wrap { container-type: inline-size; }
+
+@media (orientation: portrait) {
+  .room.board-room .board-wrap {
+    width: 100%;
+    min-width: 0;
+  }
+  .room.board-room .board.chess,
+  .room.board-room .board.reversi {
+    width: min(100%, 460px);
+    height: auto;
+    max-height: 100%;
+    aspect-ratio: 1;
+  }
+  .room.board-room .board.gomoku,
+  .room.board-room .board.go {
+    --bw: min(100%, 460px);
+    --bw: min(100cqw, 460px);
+    height: auto;
+    max-height: 100%;
+    aspect-ratio: 1;
+  }
+  .room.board-room .board.connect4 {
+    width: min(100%, 460px);
+    height: auto;
+    max-height: 100%;
+    aspect-ratio: var(--n, 7) / var(--rows, 6);
+  }
+  .room.board-room .board.xiangqi {
+    --bw: min(100%, 430px);
+    --bw: min(100cqw, 430px);
+    height: auto;
+    max-height: 100%;
+    /* v0.26.0（R14-1）：9/10 是 v0.25 之前的旧比例；交叉点对齐后
+     * 必须是 10:11 = (交点数+1)² 的宽高惯比，此处曾把 base 的 10/11 又改回 9/10 */
+    aspect-ratio: 10 / 11;
+  }
+  .room.board-room .c4-cols {
+    width: min(100%, 460px);
+    max-width: 100%;
+    grid-template-columns: repeat(7, 1fr);
+    align-self: center;
+  }
+}
+
+/* v0.10.16 竖屏棋盘区：状态条被座位环压住 + 棋盘偏下
+ * ----------------------------------------------------------------------------
+ * 实测 420×900（四子棋）：
+ *   ring 54~140，status 142~169（只剩 2px 上间距，圆角被 ring 吃掉一截），
+ *   wrap 176~837，棋盘 343px 却贴在 wrap 底部（上留 140 / 下留 0）。
+ * 原因：.table-area 是 flex column + justify-content: flex-start，
+ * 而 .board-wrap 里棋盘居中——两者叠加后棋盘被推到底部。
+ * 修法：table-area 整体垂直居中，status 加明确上下间距。 */
+@media (orientation: portrait) {
+  .room.board-room > .table-area {
+    justify-content: center;
+    gap: 8px;
+    padding: 6px 0;
+  }
+  .room.board-room > .table-area > .status {
+    flex: 0 0 auto;
+    margin: 0 auto;
+  }
+  .room.board-room .board-wrap {
+    flex: 0 1 auto;
+    max-height: 100%;
+  }
+}
+
+/* v0.10.17 竖屏棋盘区（收尾）：状态条归位到顶部，棋盘紧随，余量留底部
+ * ----------------------------------------------------------------------------
+ * 上一步把 table-area 整体居中后，status 浮到了 wrap 中间（y≈283），
+ * 棋盘被压到下方，读起来像「状态和棋盘分家」。
+ * 正确：status 贴顶（紧跟座位环），棋盘紧随其下，多出来的高度留在棋盘下方——
+ * 竖屏下棋盘宽度已吃满 400px，无法再大，余量只能落在底部。 */
+@media (orientation: portrait) {
+  .room.board-room > .table-area {
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 8px 0 0;
+  }
+  .room.board-room .board-wrap {
+    flex: 0 0 auto;
+    justify-content: flex-start;
+    gap: 6px;
+  }
+}
+
+/* v0.10.18 竖屏棋盘区（定稿）：状态贴顶 + 棋盘垂直居中
+ * ----------------------------------------------------------------------------
+ * v0.10.17 把棋盘顶到 status 下方后，420×900 实测棋盘下方空出 380px ——
+ * 像「棋盘粘在上半屏」。竖屏棋盘宽度已吃满（400px 满宽），高度受 7:6 锁定，
+ * 无法再放大，所以余量只能分配：status 贴顶，棋盘在剩余空间里居中。
+ * 做法：把 status 从 flex 流里摘出来（绝对定位到 table-area 顶部），
+ * wrap 用 height:100% + 居中消费全部余量。 */
+@media (orientation: portrait) {
+  .room.board-room > .table-area {
+    position: relative;
+    justify-content: center;
+    gap: 0;
+    padding: 34px 0 0;
+  }
+  .room.board-room > .table-area > .status {
+    position: absolute;
+    top: 8px; left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    z-index: 2;
+  }
+  .room.board-room .board-wrap {
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    justify-content: center;
+  }
+}
+
+/* ============================================================================
+ * v0.10.16 智囊候选面板 .hint-panel
+ * ----------------------------------------------------------------------------
+ * 服务端 game:hint 早就返回最多 6 个候选（label 牌型 / text 中文描述 /
+ * wholeHand 是否一手走完），但前端只把第 1 个应用上去、其余靠连点循环，
+ * 玩家看不到「有几种选择、分别是什么」。
+ * 面板挂在 .actionbar 内、向上弹出，不占网格轨道（开合不会让手牌跳动）。
+ * ========================================================================== */
+.hint-panel {
+  position: absolute;
+  right: 10px;
+  bottom: calc(100% + 8px);
+  z-index: 40;
+  width: min(296px, calc(100vw - 24px));
+  max-height: min(46vh, 300px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  background: rgba(12, 18, 30, .97);
+  border: 1px solid rgba(120, 150, 210, .3);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .55);
+  backdrop-filter: blur(14px);
+  overflow: hidden;
+  animation: hpIn .18s ease-out;
+}
+@keyframes hpIn {
+  from { opacity: 0; transform: translateY(6px) scale(.98); }
+  to { opacity: 1; transform: none; }
+}
+.hint-panel .hp-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px 6px;
+  font-size: 11.5px; color: #9fb2cf;
+  border-bottom: 1px solid rgba(120, 150, 210, .16);
+}
+.hint-panel .hp-x {
+  width: 22px; height: 22px; flex: 0 0 22px;
+  border: 0; border-radius: 7px;
+  background: rgba(255, 255, 255, .07); color: #c8d6ea;
+  font-size: 15px; line-height: 1; cursor: pointer;
+}
+.hint-panel .hp-x:hover { background: rgba(255, 255, 255, .14); }
+.hint-panel .hp-list {
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 4px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.hint-panel .hp-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, .04);
+  color: #e6eefb;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.hint-panel .hp-item:hover { background: rgba(120, 160, 240, .16); }
+.hint-panel .hp-item.on {
+  border-color: rgba(120, 190, 255, .7);
+  background: rgba(80, 150, 255, .2);
+}
+.hint-panel .hp-tag {
+  flex: 0 0 auto;
+  padding: 1px 6px; border-radius: 6px;
+  background: rgba(120, 160, 240, .22);
+  color: #a8c8ff;
+  font-size: 10px; white-space: nowrap;
+}
+.hint-panel .hp-txt {
+  font-size: 12.5px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 0;
+}
+.hint-panel .hp-all {
+  padding: 1px 5px; border-radius: 5px;
+  background: rgba(255, 199, 87, .2);
+  color: #ffd76e; font-size: 9.5px; white-space: nowrap;
+}
+.hint-panel .hp-n { font-size: 10px; color: #8fa3bf; white-space: nowrap; }
+
+/* 窄屏：候选较多时列表更紧凑 */
+@media (max-width: 620px) {
+  .hint-panel { width: calc(100vw - 20px); right: 0; }
+  .hint-panel .hp-item { padding: 8px 8px; }
+  .hint-panel .hp-txt { font-size: 12px; }
+}
+/* 横屏高度紧张时缩短列表 */
+@media (orientation: landscape) and (max-height: 560px) {
+  .hint-panel { max-height: min(62vh, 210px); width: min(268px, 42vw); }
+  .hint-panel .hp-item { padding: 5px 7px; }
+  .hint-panel .hp-txt { font-size: 11.5px; }
+}
+
+/* 候选面板的定位锚点：.actionbar 必须是 relative，否则 absolute 面板会跑到页面角落 */
+.actionbar { position: relative; }
+
+/* v0.10.17 候选面板遮挡手牌（真实体验缺陷）
+ * ----------------------------------------------------------------------------
+ * 420×900 实测：.hand 在 431~567，而面板原本 bottom: 100%+8 从 .actionbar
+ * 向上弹，落在 404~562 —— 正好把 17 张手牌整块盖住。
+ * 玩家点「提示」后既看不到候选，也看不到被选中的牌，等于白点。
+ *
+ * 改为：面板**只允许长在牌桌区内部**（.table-area 144~369）。
+ * 用 max-height 卡死高度，超出的候选在面板内滚动，不向外溢出。
+ * 手牌区（.hand）和操作条永远不被覆盖。 */
+.hint-panel {
+  bottom: auto;
+  /* 牌桌区高度约 225px（420×900），面板最多占八成，留出状态条空间 */
+  max-height: min(38vh, calc(100vh - 500px), 220px);
+}
+
+/* 面板定位修正：仍需贴 actionbar 上沿（bottom 锚定），只是把高度卡短，
+ * 让它只侵入牌桌区，不越过手牌区下沿（.hand top ≈ actionbar top - 138）。 */
+.hint-panel {
+  bottom: calc(100% + 6px);
+  max-height: min(212px, 30vh, calc(100vh - 520px));
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  .hint-panel { max-height: min(150px, 40vh); bottom: calc(100% + 4px); }
+}
+
+/* 面板高度定稿：手牌区上沿必须完全可见。
+ * 420×900 实测：.hand 431~567，.actionbar 569 起；
+ * 面板底 = actionbar 顶 - 6，可用高度只有 569-431-6 = 132px。
+ * 取 128px（3 行候选 + 表头，其余内部滚动），手牌零遮挡。 */
+.hint-panel {
+  max-height: min(128px, calc(100vh - 560px));
+}
+/* 小屏/横屏再收一档 */
+@media (max-width: 400px), (orientation: landscape) and (max-height: 560px) {
+  .hint-panel { max-height: min(112px, 34vh); }
+}
+
+/* 面板定位终解：挂在 .room 上、落在牌桌区内
+ * ----------------------------------------------------------------------------
+ * 前面几次都在调 max-height，但根本矛盾没变：.hand 紧贴 .actionbar 上沿，
+ * 只要从 actionbar 向上弹，就必然盖住手牌。
+ * 正确做法：面板锚定到整个房间，位置固定在牌桌区下半部，与手牌区完全不重叠。
+ * 结构上把面板 append 到 section.room（见 ui-games.js），这里定坐标。
+ *   牌桌区 144~369 / 手牌 431~567 → 面板放 190~420 区间，取 bottom 从底部算。 */
+.room > .hint-panel {
+  position: absolute;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  bottom: auto;
+  /* 顶部对齐牌桌区中部，高度不超过牌桌区剩余空间 */
+  top: calc(var(--hint-top, 200px));
+  width: min(340px, calc(100vw - 28px));
+  max-height: min(180px, 26vh);
+}
+
+/* v0.10.18 候选面板最终定位：长在牌桌区内部
+ * ----------------------------------------------------------------------------
+ * 前几版都从 .actionbar 向上弹，但 .hand 紧贴操作条上沿（实测 431~567），
+ * 无论怎么调高度都会盖住手牌 —— 那是结构上的必然，不是数值没调好。
+ * 现在面板 append 到 .table-area（绝对定位），牌桌区自带 overflow:hidden
+ * 与确定高度，面板再怎么长也出不了牌桌区，手牌 100% 可见。
+ * 顺带：牌桌区在竖屏通常只有 200~260px，面板取 88% 高度，其余内部滚动。 */
+.table-area > .hint-panel {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: auto;
+  bottom: 6px;
+  right: auto;
+  z-index: 25;
+  width: min(340px, calc(100% - 20px));
+  max-height: 88%;
+}
+/* 抵消前面几轮针对 .actionbar 锚点和 .room 锚点写的旧值 */
+.room > .hint-panel { position: static; transform: none; width: auto; max-height: none; }
+.actionbar > .hint-panel { position: absolute; }
+
+/* 面板的定位锚点 */
+.table-area { position: relative; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ★ v0.10.20  强制横屏「布局底线」—— 必须放在文件最末
+   ──────────────────────────────────────────────────────────────────────────
+   上面那段 html.ha-rot-land 镜像（约 640–1200 行）只是把媒体查询版式搬过来，
+   但**后面还有大量竖屏规则**（.card-room > .room-main 的六轨模板在 ~975 行），
+   它们特异度相同、源顺序更靠后，于是整段覆盖了横屏布局。
+
+   实测症状（393×684 竖屏点「横屏」）：
+     .room 已正确变成 "info main" 两列，
+     但 .room-main 仍是竖屏五轨 "head seats table counter acts"，
+     .hand-area 落在 hand 区而该区**不存在** → 被自动放进隐式轨道，宽度塌成 8px，
+     17 张手牌全叠在一个点上（截图里「手牌只剩最右一张」）。
+
+   解法：把这些**拓扑级**规则（只改 grid 骨架，不含视觉细节）在文件末尾再声明一次。
+   只在 html.ha-rot-land 下生效，竖屏完全不受影响。
+   ⚠ 以后再加竖屏 grid 规则，若涉及 .room / .room-main / .info-panel 的模板，
+     必须同步检查本段是否被覆盖（改完用 getComputedStyle().gridTemplateAreas 验）。
+   ══════════════════════════════════════════════════════════════════════════ */
+html.ha-rot-land .room.card-room,
+html.ha-rot-land .room.mahjong-room {
+  display: grid;
+  grid-template-columns: minmax(210px, min(310px, 34%)) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: "info main";
+  column-gap: 8px;
+  row-gap: 0;
+  padding: 3px 10px 3px;
+}
+html.ha-rot-land .room.card-room:has(> .info-panel.collapsed),
+html.ha-rot-land .room.mahjong-room:has(> .info-panel.collapsed) {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "main";
+}
+html.ha-rot-land .room.card-room > .info-panel,
+html.ha-rot-land .room.mahjong-room > .info-panel {
+  display: grid;
+  grid-area: info;
+  grid-template-columns: minmax(0, 1fr);
+  /* v0.16.0（R4-9k）四卡改为三卡：牌局数据卡在横屏由牌桌左上浮层承担，
+   * 左栏这张是重复信息，隐藏后把 1.02fr 让给聊天。
+   * 新比例 .5 / .34 / 2.55（战绩 / 积分 / 聊天）：
+   *   384px 左栏 → 战绩 52 / 积分 35 / 聊天 265px，
+   *   聊天 5 段内容 190px + 记录 6~7 行，真正可用。
+   * 战绩/积分都是可滚动列表，2 行足够看「谁在赢」，需要更多可展开面板。 */
+  grid-template-rows: minmax(0, .5fr) minmax(0, .34fr) minmax(0, 2.55fr) 0;
+  grid-template-areas: "rec" "rank" "chat" "ins";
+  gap: 5px;
+  padding: 0;
+  align-content: stretch;
+}
+html.ha-rot-land .room.card-room > .info-panel > .ins-card,
+html.ha-rot-land .room.mahjong-room > .info-panel > .ins-card { display: none; }
+/* 两条规则必须**行数与区域数一一对应**：
+ * `grid-template-rows` 写 4 个值却只给 3 个命名区域时，浏览器会额外生成
+ * 一条隐式行并重新分配多余轨道 —— 实测 rows="86 58 107 118"，
+ * 聊天落到了第 3 行（107px），第 4 行的 118px 空着没人用，
+ * 正是「横屏聊天卡怎么调都只有 107px」的真因。 */
+html.ha-rot-land .room.card-room > .info-panel > .rec-card,
+html.ha-rot-land .room.mahjong-room > .info-panel > .rec-card { grid-area: rec; }
+html.ha-rot-land .room.card-room > .info-panel > .rank-card,
+html.ha-rot-land .room.mahjong-room > .info-panel > .rank-card { grid-area: rank; }
+html.ha-rot-land .room.card-room > .info-panel > .chat-card,
+html.ha-rot-land .room.mahjong-room > .info-panel > .chat-card { grid-area: chat; }
+html.ha-rot-land .room.card-room > .info-panel.collapsed,
+html.ha-rot-land .room.mahjong-room > .info-panel.collapsed { display: none; }
+
+/* 右栏骨架：这是被竖屏六轨覆盖得最惨的一条 */
+html.ha-rot-land .card-room > .room-main,
+html.ha-rot-land .mahjong-room > .room-main {
+  display: grid;
+  grid-area: main;
+  grid-template-columns: minmax(0, 1fr);
+  /* 6 行：head / seats / table(1fr) / counter / acts(操作条) / hand(手牌)
+     v0.10.20：原来只有 5 行且把 actionbar 与 hand 都塞进 acts 行，
+     acts 轨道分到 0px、手牌被挤到隐式行，实测牌桌只剩 122px、底部空 150px。
+     现在给 actionbar 和 hand 各占一行，acts 行作纯间隔。 */
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto minmax(56px, auto);
+  grid-template-areas:
+    "head"
+    "seats"
+    "table"
+    "counter"
+    "acts"
+    "hand";
+  column-gap: 0;
+  row-gap: 2px;
+  min-width: 0;
+  min-height: 0;
+}
+html.ha-rot-land .card-room > .room-main > .room-head,
+html.ha-rot-land .mahjong-room > .room-main > .room-head { grid-area: head; }
+html.ha-rot-land .card-room > .room-main > .ring,
+html.ha-rot-land .mahjong-room > .room-main > .ring { grid-area: seats; }
+html.ha-rot-land .card-room > .room-main > .table-area,
+html.ha-rot-land .mahjong-room > .room-main > .table-area { grid-area: table; min-height: 0; }
+html.ha-rot-land .card-room > .room-main > .counter-bar,
+html.ha-rot-land .mahjong-room > .room-main > .counter-bar { grid-area: counter; }
+/* 手牌挂在 acts 区（横屏是「操作条 + 手牌」同一行）；单列情况下顺序靠 order 排 */
+html.ha-rot-land .card-room > .room-main > .hand-area,
+html.ha-rot-land .mahjong-room > .room-main > .hand-area {
+  min-width: 0;
+  min-height: 0;
+  align-self: end;
+}
+html.ha-rot-land .card-room > .room-main > .actionbar,
+html.ha-rot-land .mahjong-room > .room-main > .actionbar {
+  min-width: 0;
+  align-self: center;
+}
+/* 两者同区会重叠，横屏里拆成「第5行操作条 / 第6行手牌」
+   v0.10.20 修正：原来 hand 写 grid-row:4/6（跨 counter/acts/hand 三行）、
+   actionbar 写 grid-row:4（与 counter 同格）—— 实测操作条被推到 y=-186，
+   盖在牌桌上、手牌底部被裁。按 6 行模板逐一对齐。 */
+html.ha-rot-land .card-room > .room-main > .hand-area,
+html.ha-rot-land .mahjong-room > .room-main > .hand-area {
+  grid-row: 6;
+  grid-column: 1;
+  z-index: 2;
+}
+html.ha-rot-land .card-room > .room-main > .actionbar,
+html.ha-rot-land .mahjong-room > .room-main > .actionbar {
+  grid-row: 5;
+  grid-column: 1;
+  z-index: 3;
+}
+/* 手牌容器必须能拿到整列宽度，否则 layoutHand() 量到 8px */
+html.ha-rot-land .card-room .hand,
+html.ha-rot-land .mahjong-room .hand {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  padding: 18px 6px 4px;
+}
+
+/* ⚠ 特异度补丁：上面那段镜像里 .hand-area 写的是 4 选择器组
+   （html.ha-rot-land .card-room > .room-main > .hand-area = 1,3,0），
+   我在本段只写 2 选择器（1,2,0）会输。这里按完全相同的写法复写一遍。
+   —— 这类「以为放末尾就能覆盖」的误判踩过两次，教训是：
+      末尾只解决源顺序，不解决特异度，两者要同时满足。 */
+html.ha-rot-land .card-room > .hand-area,
+html.ha-rot-land .mahjong-room > .hand-area,
+html.ha-rot-land .card-room > .room-main > .hand-area,
+html.ha-rot-land .mahjong-room > .room-main > .hand-area {
+  /* ⚠ 不能再写 grid-area: hand —— 它会展开成 grid-row:hand / grid-column:hand，
+     而本模板是单列，「hand」在列轴上被当成**第 2 条隐式列**，
+     于是手牌被推到屏幕右侧看不见（实测 clientWidth=78、top 与操作条相同）。
+     只写 grid-row/grid-column 数字。 */
+  grid-row: 6;
+  grid-column: 1;
+  align-self: end;
+  justify-self: stretch;
+  min-height: 0;
+  max-width: 100%;
+  padding-top: 0;
+  margin-top: 0;
+  overflow: visible;
+  z-index: 2;
+}
+html.ha-rot-land .card-room > .hand-area.has-two-row,
+html.ha-rot-land .mahjong-room > .hand-area.has-two-row,
+html.ha-rot-land .card-room > .room-main > .hand-area.has-two-row,
+html.ha-rot-land .mahjong-room > .room-main > .hand-area.has-two-row { min-height: 0; }
+
+html.ha-rot-land .card-room > .actionbar,
+html.ha-rot-land .mahjong-room > .actionbar,
+html.ha-rot-land .card-room > .room-main > .actionbar,
+html.ha-rot-land .mahjong-room > .room-main > .actionbar {
+  /* 不再用 grid-area:acts —— 6 行模板里 acts 是第 5 行的命名区，
+     但同时写 grid-area 与 grid-row 时后者被前者覆盖，实测操作条与手牌
+     都落在第 5 行（top 同为 244）互相叠住。只用 grid-row 定位。 */
+  grid-row: 5;
+  grid-column: 1;
+  align-self: center;
+  min-width: 0;
+  z-index: 3;
+}
+
+/* 手牌文本尺寸：横屏牌面小，字号同步收 */
+html.ha-rot-land .card-room .hand .card .rk,
+html.ha-rot-land .mahjong-room .hand .tile > b { font-size: 12px; }
+html.ha-rot-land .card-room .hand .card .st,
+html.ha-rot-land .mahjong-room .hand .tile > sub { font-size: 8px; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ★ v0.10.20  强制横屏下的座位环（末位补齐）
+   ──────────────────────────────────────────────────────────────────────────
+   上面镜像段写的选择器是 `.card-room > .ring`（假定 ring 是 room 直接子级），
+   但真实 DOM 是 `.card-room > .room-main > .ring` —— 多一层，规则全不命中。
+   实测后果：座位仍是竖排大卡（头像 44px + 名字 + 剩余张数，高 86px），
+   把 387px 的右栏吃掉 22%，牌桌只剩 122px。
+
+   这里两种层级都写，横屏压成**单行小头像**（26px），高度从 86 → 34。
+   ══════════════════════════════════════════════════════════════════════════ */
+html.ha-rot-land .card-room > .ring,
+html.ha-rot-land .mahjong-room > .ring,
+html.ha-rot-land .card-room > .room-main > .ring,
+html.ha-rot-land .mahjong-room > .room-main > .ring {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+  align-self: center;
+  min-width: 0;
+  max-width: none;
+  overflow: visible;
+}
+html.ha-rot-land .card-room > .ring > .ring-seat,
+html.ha-rot-land .mahjong-room > .ring > .ring-seat,
+html.ha-rot-land .card-room > .room-main > .ring > .ring-seat,
+html.ha-rot-land .mahjong-room > .room-main > .ring > .ring-seat {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  width: auto;
+  min-height: 0;
+  height: auto;
+  padding: 2px 7px 2px 2px;
+  border-radius: 18px;
+}
+html.ha-rot-land .card-room .ring-seat .rs-ava,
+html.ha-rot-land .mahjong-room .ring-seat .rs-ava {
+  transform: none;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+}
+html.ha-rot-land .card-room .ring-seat .rs-ava .ava,
+html.ha-rot-land .mahjong-room .ring-seat .rs-ava .ava {
+  width: 24px !important;
+  height: 24px !important;
+}
+html.ha-rot-land .card-room .ring-seat .rs-name,
+html.ha-rot-land .mahjong-room .ring-seat .rs-name {
+  font-size: 11px;
+  max-width: 78px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 剩余张数在横屏并进名字行，竖排那套 .rs-st 不再单列 */
+html.ha-rot-land .card-room .ring-seat .rs-st,
+html.ha-rot-land .mahjong-room .ring-seat .rs-st {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  line-height: 1;
+  margin-left: 2px;
+  min-height: 0;
+}
+
+/* ★ v0.10.20  座位环横屏「三段并置」的最终修正
+   上面几条被 style.css 的 .ring-seat .rs-ava { width:46px; flex:0 0 46px } 压制
+   （同特异度、style.css 在前但我们的规则在 table-skin.css，实际是 46px 的
+     flex-basis 把 24px 的 width 顶掉了）。这里把 flex-basis 一起改掉，
+   并显式给名字/张数留出位置，避免被头像圈层遮住。 */
+html.ha-rot-land .card-room .ring-seat,
+html.ha-rot-land .mahjong-room .ring-seat,
+html.ha-rot-land .card-room .room-main .ring-seat,
+html.ha-rot-land .mahjong-room .room-main .ring-seat {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 5px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 30px;
+  min-height: 30px;
+  padding: 1px 8px 1px 2px !important;
+  border-radius: 15px !important;
+  background: rgba(10, 22, 18, .55) !important;
+  box-shadow: inset 0 0 0 1px rgba(217, 179, 106, .28) !important;
+  overflow: hidden;
+}
+html.ha-rot-land .card-room .ring-seat .rs-ava,
+html.ha-rot-land .mahjong-room .ring-seat .rs-ava {
+  position: relative !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  flex: 0 0 24px !important;
+  box-shadow:
+    0 0 0 1.5px #d9b36a,
+    0 0 0 2.5px rgba(0, 0, 0, .5) !important;
+  transform: none !important;
+}
+html.ha-rot-land .card-room .ring-seat .rs-ava > .ava,
+html.ha-rot-land .mahjong-room .ring-seat .rs-ava > .ava,
+html.ha-rot-land .card-room .ring-seat .rs-ava > span,
+html.ha-rot-land .mahjong-room .ring-seat .rs-ava > span {
+  width: 22px !important;
+  height: 22px !important;
+}
+html.ha-rot-land .card-room .ring-seat .rs-name,
+html.ha-rot-land .mahjong-room .ring-seat .rs-name {
+  display: block !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  max-width: 76px !important;
+  font-size: 11px !important;
+  line-height: 1.1 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0 !important;
+}
+html.ha-rot-land .card-room .ring-seat .rs-st,
+html.ha-rot-land .mahjong-room .ring-seat .rs-st {
+  display: inline-flex !important;
+  align-items: baseline !important;
+  gap: 1px !important;
+  flex: 0 0 auto !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  white-space: nowrap;
+}
+html.ha-rot-land .card-room .ring-seat .rs-st b,
+html.ha-rot-land .mahjong-room .ring-seat .rs-st b { font-size: 11px !important; font-weight: 800 !important; }
+html.ha-rot-land .card-room .ring-seat .rs-st em,
+html.ha-rot-land .mahjong-room .ring-seat .rs-st em { font-size: 9px !important; margin-left: 2px !important; }
+
+/* ★ v0.10.20  横屏标题不再按视口比例截断
+   原来 max-width:34vw（竖屏点横屏时按物理宽 393 算 =133px）→「人机陪练…」。
+   改成 flex:1 吃满头部剩余空间，只在真正拥挤时才省略。 */
+html.ha-rot-land .card-room .room-head,
+html.ha-rot-land .mahjong-room .room-head {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+html.ha-rot-land .card-room .room-head .rm-title,
+html.ha-rot-land .mahjong-room .room-head .rm-title {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  font-size: 13px !important;
+}
+
+/* ★ v0.10.20  左栏战绩行：名字列优先
+   3 列模型是 [序号 12px | 名字 1fr | 数值 auto]。左栏只有 ~200px 时
+   第 3 列的「— / 0 分」是 auto，会按内容撑开拿走最后的空间，导致
+   名字被压成「游客…」。这里给数值列设软上限，把余量还给名字。 */
+html.ha-rot-land .info-panel .ist-row {
+  grid-template-columns: 12px minmax(0, 1fr) minmax(28px, auto);
+  column-gap: 4px;
+}
+html.ha-rot-land .info-panel .ist-row .ist-nm {
+  max-width: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+html.ha-rot-land .info-panel .ist-row .ist-val {
+  justify-content: flex-end;
+  min-width: 0;
+}
+html.ha-rot-land .info-panel .ist-row .ist-val b { font-size: 11px; }
+/* 聊天卡：正文至少保留 2 行，输入行 pinned 在底部 */
+html.ha-rot-land .info-panel .chat-card .ic-bd { min-height: 0; }
+html.ha-rot-land .info-panel .chat-card .chat-log {
+  min-height: 34px;
+  overflow-y: auto;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ★ v0.10.20  棋盘类房间（board-room）横屏版式 —— 兜底段
+   ──────────────────────────────────────────────────────────────────────────
+   本节解决的是「横屏棋盘房间根本拿不到横屏版式」这一类问题，分两半：
+
+   ① 媒体查询半边：真实横屏（844×390 之类）时，
+      2770 行那段的 `.room.board-room` 规则能命中，但 1942 行的旧「纵向收敛」
+      规则也会命中且写死了 `.board.xiangqi { width: min(46vh,300px) }`。
+      两者特异度同为 (0,2,0)，1942 在前、2770 在后 —— 只要后段没有覆盖
+      xiangqi 的 width，旧值就留下来，棋盘尺寸与 wrap 不一致。
+
+   ② 强制横屏半边：393×684 竖屏点「横屏」时 orientation 仍是 portrait，
+      2770 行那条 `(orientation: landscape) and (max-height:560px)` **完全不命中**。
+      实测代价（xiangqi）：
+        .room 无 grid → .table-area / .ring / .actionbar 全按普通流纵向堆叠，
+        room 高 418 > 393，溢出 25px；
+        座位环 86px 竖排横铺 664px 宽，把 board-wrap 挤到只剩 156px 高。
+      五子棋/黑白棋同样如此（room 393 恰好贴边，棋盘只有 156px ≈ 屏高的 40%）。
+
+   统一修法：把「横屏棋盘房间」的拓扑规则**无条件按横屏尺寸**重写一遍，
+   用两份选择器头（媒体查询版 + html.ha-rot-land 版）共享同一套规则体。
+   ⚠ 本节必须在文件最末 —— 1942 / 2922 / 2964 / 3006 四处 board-room 规则
+     都在它前面，靠源顺序 + 选择器权重共同压过。
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── ① 横屏棋盘房间：两栏骨架（棋盘 1fr + 右栏 ≤232px） ───────────────── */
+@media (orientation: landscape) and (max-height: 560px) {
+  .room.board-room {
+    display: grid;
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    /* v0.27.0（R15-5）：列策略改回「棋盘列 1fr + 侧栏 176~232」。
+     * 旧写法 `auto minmax(176px, 1fr)` 依赖棋盘自身的 max-content 定宽，
+     * 而棋盘带 max-width:100%（百分比在内在尺寸阶段被忽略）—— 列与内容
+     * 互相依赖，实测塌成 min-content 91px，棋盘只有 95px。
+     * 现在棋盘列有确定宽度、棋盘在其中居中，--bw 不再被列宽二次裁剪。 */
+    grid-template-columns: minmax(0, 1fr) minmax(176px, 232px);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      "head head"
+      "board side";
+    gap: 4px 8px;
+    padding: 3px 8px 4px;
+    overflow: hidden;
+  }
+  .room.board-room > .room-head { grid-area: head; min-width: 0; }
+  .room.board-room > .table-area {
+    grid-area: board;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    /* 竖屏段（3006 行）给它设了 position:relative + padding-top:34px，
+       横屏必须清掉，否则 status 的绝对定位锚点错位、棋盘被下推 34px */
+    position: static;
+    /* v0.27.0（R15-5）：改「吃满棋盘列」而不是 max-content 收缩。
+     * 收缩写法会与棋盘的 max-width:100% 形成循环依赖（塌成 91px）；
+     * 拉满后棋盘由 --bw 定宽、在列内居中，几何与 --bw 严格闭合。 */
+    justify-self: stretch;
+    max-width: none;
+    width: 100%;
+  }
+  .room.board-room > .table-area > .status {
+    /* 同理撤销竖屏的绝对定位：横屏让 status 回到 flex 流里，
+       由 justify-content:center 统一分配，不会与棋盘抢位置 */
+    position: static;
+    transform: none;
+    margin: 0;
+    z-index: auto;
+  }
+  .room.board-room > .ring,
+  .room.board-room > .seatring-wrap {
+    grid-area: side;
+    align-self: start;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+    min-height: 0;
+    flex: 0 1 auto;
+  }
+  .room.board-room > .actionbar {
+    grid-area: side;
+    align-self: end;
+    flex-wrap: wrap;
+    max-height: none;
+    min-height: 0;
+    padding: 2px 0 calc(2px + var(--ha-sab));
+    overflow: visible;
+  }
+  .room.board-room .board-wrap {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    gap: 2px;
+  }
+  /* 正方形棋盘：高度吃满 wrap，宽度由 aspect-ratio 反算。
+     ⚠ 必须同时写 width:auto —— style.css 里有 width: min(88vw,460px) 的定宽，
+       不覆盖就会退回到「按宽度定尺寸」，高度反而不受控。 */
+  /* v0.26.0（R14-1）：交叉点棋盘（五子/围棋/象棋）撤出本簇 ——
+   * width:auto;height:100% 让真实渲染宽与 --bw 脱钩（漂移根因之一）。
+   * 三者的尺寸交回 style.css 的 width:var(--bw) + 2981 段的 --bw 覆盖
+   * （横屏 --bw = min(88vw, 100vh-170px)，宽≈可用高）。 */
+  .room.board-room .board.chess,
+  .room.board-room .board.reversi {
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    aspect-ratio: 1;
+  }
+  /* 象棋：只撤尺寸，保留格字号压缩；比例回归 10:11（同上） */
+  .room.board-room .board.xiangqi .sq {
+    min-width: 0;
+    min-height: 0;
+    font-size: clamp(13px, 3.4vh, 26px);
+    line-height: 1;
+  }
+  .room.board-room .board.connect4 {
+    width: auto;
+    height: calc(100% - 32px);
+    max-width: 100%;
+    max-height: calc(100% - 32px);
+    aspect-ratio: 7 / 6;
+    margin-top: 0;
+  }
+  .room.board-room .c4-cols {
+    width: min(calc(100% - 4px), 340px);
+    max-width: 100%;
+    grid-template-columns: repeat(7, 1fr);
+    flex: 0 0 auto;
+    align-self: center;
+  }
+  .room.board-room canvas { max-width: 100%; max-height: 100%; }
+}
+
+/* ── ② 强制横屏（html.ha-rot-land）：同一套骨架，规则体逐条镜像 ─────────
+   逻辑视口是 684×393（物理 393×684 旋转而来），所以媒体查询全不命中，
+   只能用类选择器。多一层 html. 使特异度升到 (0,3,0)，天然压过前面所有
+   `.room.board-room ...`（0,2,0），不必满屏 !important。 */
+html.ha-rot-land .room.board-room {
+  display: grid;
+  flex: 1 1 100%;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  /* v0.10.20：右栏自适应。
+     原因：正方形棋盘按高度算宽度（393-46-8=339 高 → 339 宽），
+     左栏若固定 1fr（430px），棋盘两侧各空 45px，右栏只有 232px 却其下方
+     还有 250px 空白 —— 一块 200×250 的死区。
+
+     ⚠ 关键坑：写 `justify-content: stretch` + `max-content` 列 **不生效**。
+       stretch 的语义是「把列拉伸到填满容器」，max-content 只是**下限提示**，
+       结果左列照样被拉到 430px，棋盘还是贴在左边。
+       实测：gtc 仍是 "430px 324px"，ta.w=336 但 ta.x 靠左。
+     正确写法是让左列 `auto`（= min(max-content, 可用空间)）、右列 `1fr`，
+       并且**不要**设置 justify-content（默认 normal 就够）。
+       auto 列在 1fr 存在时不会被拉伸，只吃内容宽度。 */
+  /* v0.27.0（R15-5）：同媒体查询版，见上方注释 —— auto 列会与
+   * max-width:100% 互相依赖而塌缩，这里必须是确定的 1fr。 */
+  grid-template-columns: minmax(0, 1fr) minmax(176px, 232px);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "head head"
+    "board side";
+  gap: 4px 8px;
+  padding: 3px 8px 4px;
+  overflow: hidden;
+}
+html.ha-rot-land .room.board-room > .room-head { grid-area: head; min-width: 0; }
+html.ha-rot-land .room.board-room > .table-area {
+  grid-area: board;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  position: static;
+  /* v0.27.0（R15-5）：同媒体查询版 —— 拉满棋盘列，棋盘在列内居中 */
+  justify-self: stretch;
+  max-width: none;
+  width: 100%;
+}
+html.ha-rot-land .room.board-room > .table-area > .status {
+  position: static;
+  transform: none;
+  margin: 0;
+  z-index: auto;
+}
+html.ha-rot-land .room.board-room > .ring,
+html.ha-rot-land .room.board-room > .seatring-wrap {
+  grid-area: side;
+  align-self: start;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 0;
+  flex: 0 1 auto;
+}
+html.ha-rot-land .room.board-room > .actionbar {
+  grid-area: side;
+  align-self: end;
+  flex-wrap: wrap;
+  max-height: none;
+  min-height: 0;
+  padding: 2px 0 calc(2px + var(--ha-sab));
+  overflow: visible;
+}
+html.ha-rot-land .room.board-room .board-wrap {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  gap: 2px;
+}
+/* v0.26.0（R14-1）：强制横屏下媒体查询全不命中，--bw 无人在此覆盖 ——
+ * 必须在本簇内显式给 --bw（vh/vw 为逻辑视口值，与横屏同式），并撤掉
+ * width:auto/height:100% 直写，交叉点几何才能与渲染宽闭合。 */
+html.ha-rot-land .room.board-room .board.gomoku,
+html.ha-rot-land .room.board-room .board.go {
+  /* ⚠ 强制横屏时 vw/vh 仍是**物理竖屏**值：物理宽 ≈ 逻辑高，
+   * 所以这里必须用 88vw（不是媒体查询版的 46vw，那会把棋盘压到一半）。 */
+  --bw: min(88vw, calc(100vh - 96px));
+}
+html.ha-rot-land .room.board-room .board.chess,
+html.ha-rot-land .room.board-room .board.reversi {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 1;
+}
+html.ha-rot-land .room.board-room .board.xiangqi {
+  --bw: min(88vw, calc((100vh - 96px) * 10 / 11));
+  aspect-ratio: 10 / 11;
+}
+html.ha-rot-land .room.board-room .board.xiangqi .sq {
+  min-width: 0;
+  min-height: 0;
+  font-size: clamp(13px, 3.4vh, 26px);
+  line-height: 1;
+}
+html.ha-rot-land .room.board-room .board.connect4 {
+  width: auto;
+  height: calc(100% - 32px);
+  max-width: 100%;
+  max-height: calc(100% - 32px);
+  aspect-ratio: 7 / 6;
+  margin-top: 0;
+}
+html.ha-rot-land .room.board-room .c4-cols {
+  width: min(calc(100% - 4px), 340px);
+  max-width: 100%;
+  grid-template-columns: repeat(7, 1fr);
+  flex: 0 0 auto;
+  align-self: center;
+}
+html.ha-rot-land .room.board-room canvas { max-width: 100%; max-height: 100%; }
+
+/* ── ③ 横屏棋盘房间的座位环：压成单行胶囊（与牌桌房间同一套尺寸） ──────
+   横屏右栏只有 ≤232px，座位环必须横向铺满而不是竖排堆叠。
+   实测（强制横屏 xiangqi）：原 ring 高 86px、宽 664px 横铺整个房间，
+   把 board-wrap 挤到 156px。压成 30px 高后棋盘可拿到 ~260px。 */
+@media (orientation: landscape) and (max-height: 560px) {
+  .room.board-room .ring {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 3px;
+  }
+  .room.board-room .ring-seat {
+    flex: 0 0 auto;
+    min-width: 0;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    height: 28px;
+    min-height: 28px;
+    padding: 1px 7px 1px 2px;
+    gap: 4px;
+    border-radius: 14px;
+  }
+  .room.board-room .ring-seat .rs-ava { width: 22px; height: 22px; flex: 0 0 22px; --sz: 22px !important; }
+  .room.board-room .ring-seat .rs-ava .ava { width: 22px; height: 22px; }
+  .room.board-room .ring-seat .rs-ava .rs-turn { display: none; }
+  .room.board-room .ring-seat .rs-name { font-size: 10px; max-width: 52px; }
+  .room.board-room .ring-seat .rs-st { font-size: 9px; gap: 2px; }
+  .room.board-room .status { font-size: 11px; padding: 1px 8px; }
+  .room.board-room > .actionbar .btn { height: 30px; min-height: 30px; font-size: 12px; padding: 0 8px; }
+}
+html.ha-rot-land .room.board-room .ring {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3px;
+}
+html.ha-rot-land .room.board-room .ring-seat {
+  flex: 0 0 auto;
+  min-width: 0;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  height: 28px;
+  min-height: 28px;
+  padding: 1px 7px 1px 2px;
+  gap: 4px;
+  border-radius: 14px;
+}
+html.ha-rot-land .room.board-room .ring-seat .rs-ava { width: 22px; height: 22px; flex: 0 0 22px; --sz: 22px !important; }
+html.ha-rot-land .room.board-room .ring-seat .rs-ava .ava { width: 22px; height: 22px; }
+html.ha-rot-land .room.board-room .ring-seat .rs-ava .rs-turn { display: none; }
+html.ha-rot-land .room.board-room .ring-seat .rs-name { font-size: 10px; max-width: 52px; }
+html.ha-rot-land .room.board-room .ring-seat .rs-st { font-size: 9px; gap: 2px; }
+html.ha-rot-land .room.board-room .status { font-size: 11px; padding: 1px 8px; }
+html.ha-rot-land .room.board-room > .actionbar .btn { height: 30px; min-height: 30px; font-size: 12px; padding: 0 8px; }
+
+/* ── ④ 棋盘房间横屏操作条：靠左排列，不要两端撑开 ──────────────────────
+   实测（强制横屏 684×393）：
+     gomoku 操作条宽 324px，里面只有 2 个按钮（音效 36 + 智囊 58 = 94px）。
+     父级 .actionbar 是 `flex-wrap: wrap` 且没有 justify-content，
+     但 .ab-ops / .ab-ops-main 的 flex:1 把它撑开成两端对齐，
+     于是「音效」贴最左、「智囊」贴最右，中间 230px 空洞 ——
+     两块按钮看起来像分属两个区域，实际是同一组操作。
+   修法：棋盘房间横屏时操作条改左对齐、按钮组不撑开。 */
+@media (orientation: landscape) and (max-height: 560px) {
+  .room.board-room > .actionbar {
+    justify-content: flex-start;
+    align-items: center;
+    gap: 6px;
+  }
+  .room.board-room > .actionbar > .ab-ops,
+  .room.board-room > .actionbar > .ab-ops-main,
+  .room.board-room > .actionbar > .ab-left {
+    flex: 0 0 auto;
+    justify-content: flex-start;
+  }
+  .room.board-room > .actionbar > .ab-right { margin-left: auto; }
+}
+html.ha-rot-land .room.board-room > .actionbar {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 6px;
+}
+html.ha-rot-land .room.board-room > .actionbar > .ab-ops,
+html.ha-rot-land .room.board-room > .actionbar > .ab-ops-main,
+html.ha-rot-land .room.board-room > .actionbar > .ab-left {
+  flex: 0 0 auto;
+  justify-content: flex-start;
+}
+html.ha-rot-land .room.board-room > .actionbar > .ab-right { margin-left: auto; }
+
+/* ── ⑤ 棋盘房间横屏：空的主操作区不该占位 ──────────────────────────────
+   实测（强制横屏 gomoku/xiangqi）：
+     .actionbar 是 flex-direction:column；.ab-ops 是 width:100% 的横向 flex，
+     里面依次是「音效」「.ab-ops-main」「智囊」。
+     棋类局中没有「出牌」类按钮，.ab-ops-main 是**空的**，但它有
+     `flex: 1 1 auto` → 把后面 302px 全部吃掉，智囊被顶到最右边（x=264/298），
+     视觉上像「左一个音效、右一个智囊」两组互不相干的控件。
+
+   修法：棋盘房间横屏时，空的主操作区不占空间（:empty 才收，
+   有四子棋这类真的会传按钮的游戏不受影响）。同时 .ab-ops 左对齐。 */
+html.ha-rot-land .room.board-room > .actionbar > .ab-ops,
+html.ha-rot-land .room.board-room > .actionbar > .ab-ops-main {
+  justify-content: flex-start;
+}
+html.ha-rot-land .room.board-room > .actionbar > .ab-ops > .ab-ops-main:empty {
+  flex: 0 0 0;
+  width: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  .room.board-room > .actionbar > .ab-ops,
+  .room.board-room > .actionbar > .ab-ops-main { justify-content: flex-start; }
+  .room.board-room > .actionbar > .ab-ops > .ab-ops-main:empty {
+    flex: 0 0 0;
+    width: 0;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+  }
+}
+
+/* ── ⑥ 竖屏同样的问题（v0.10.20 一并修） ────────────────────────────────
+   上面 ⑤ 只覆盖横屏。竖屏实测 gomoku / xiangqi：
+     音效 x=10、智囊 x=303（操作条宽 373）—— 同一个空 .ab-ops-main 占位。
+   棋类局中没有主操作按钮，这个占位对竖屏也没有任何价值。
+   与 ⑤ 用同样的 :empty 收口，不区分方向。 */
+.actionbar > .ab-ops > .ab-ops-main:empty {
+  flex: 0 0 0;
+  width: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+}
+
+/* ── ⑦ 棋盘房间（无主操作）操作条应左对齐，不是右对齐 ──────────────────
+   1342 行那条：
+       .actionbar:not(.has-ops) .ab-ops { justify-content: flex-end; }
+   它的原意是「牌类等待其他玩家时，操作行只剩聊天入口，把聊天贴右边」。
+   但这条规则**按 .has-ops 判断，而 has-ops 只取决于服务端有没有下发
+   buttons**；棋盘类（gomoku / chess / xiangqi / go / reversi）局中永远
+   不下发操作按钮，于是这条「聊天贴右」的规则被通用到了棋类上。
+
+   实测竖屏 gomoku（393 宽）：
+     .ab-ops 宽 351，justify-content: flex-end
+     → 音效 x=257、智囊 x=303，左侧 250px 全空。
+   这与棋类的视觉逻辑相反：棋盘的左边缘在 x=10，操作条却从 x=257 才开始，
+   读起来像「操作属于右侧空白区」而不是「属于这局棋」。
+
+   修法：棋盘房间一律左对齐。牌类/结账等待态继续保留右对齐（不受影响）。
+   ⚠ 只在 board-room 下覆盖，别改全局那条。 */
+.room.board-room > .actionbar > .ab-ops { justify-content: flex-start; }
+.room.board-room > .actionbar.has-ops > .ab-ops { justify-content: flex-start; }
+
+/* ── ⑧ 双升主牌描边（v0.10.20 补回 shengjiCardFace 时新增的 class） ──────
+   shengjiCardFace(id, isTrump) 的第二个参数只做一件事：给点数文字加
+   `.trump-face`，让主牌在文字牌面模式下也能一眼认出来。
+   图片牌面模式下 .card 背景已经是牌面图，这里只加深描边，不遮挡图案。 */
+.card .rk.trump-face {
+  position: relative;
+}
+.face-text .card .rk.trump-face::after {
+  content: '';
+  position: absolute;
+  inset: -2px -4px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 215, 110, .75);
+  pointer-events: none;
+}
+
+/* ── ⑨ 竖屏房头按钮溢出（v0.10.20 新增横屏键后暴露） ────────────────────
+   实测 393×684 双升 / 德州：`.room` scrollWidth 比 clientWidth 多 24~25px，
+   唯一的越界元素是房头最后一个 `.btn.sm.ghost`（48px，l=369 / rt=417）。
+
+   为什么是这两款：房头在牌类房间有 6 个控件（大厅 / 标题 / 房号 / 彩头 /
+   战绩 / 横屏 / 设置 / 复盘），393px 宽本来刚好，v0.10.20 加了「横屏」键后
+   变成放不下。棋盘房间只有 5 个，所以没爆。
+
+   修法：竖屏窄屏下把房头按钮压窄（图标化），标题让出 flex 空间。
+   不隐藏任何按钮 —— 每个都是必要入口。
+   ⚠ 之前房头只是「看上去挤」，没有水平滚动，所以一直没被发现；
+     横向溢出会让整页可以左右拖动，iOS 上表现为「页面会晃」。 */
+@media (max-width: 430px) {
+  .room-head {
+    gap: 4px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .room-head .rm-title {
+    /* 标题是唯一可以压缩的弹性项，把空间让给按钮 */
+    flex: 1 1 0;
+    min-width: 0;
+    font-size: 13px;
+  }
+  .room-head > .btn.sm,
+  .room-head > .btn.sm.ghost {
+    flex: 0 0 auto;
+    padding: 0 7px;
+    min-width: 30px;
+    min-height: 28px;
+    font-size: 12px;
+    gap: 3px;
+  }
+  /* ═════════════════════════════════════════════════════════════════════
+     v0.10.21 修复「回大厅按钮异常 / 战绩按钮显示有缺陷」
+     ---------------------------------------------------------------------
+     症状（真机 1272×2860，412dip 宽）：
+       · 「大厅」按钮在房头里**只剩一个空的青色小方块**，看不到箭头图标；
+       · 「战绩」按钮只剩一个孤零零的 ▾，既读不出是什么，也不知道开/关。
+
+     根因（两条叠加，都是 v0.10.20 图标化改出来的）：
+       ① `IC('back', 14)` 生成的是 `<span class="ic"><svg width=14 …>`。
+          上一版 `.room-head > .btn.sm` 写的是 `padding: 0 7px`，
+          把**上下内边距压成 0**；14px 的 svg 撑不起 32px 的高度，
+          按钮被 flex 的 `align-items: center` 压成一条细框，
+          svg 本身又是 `stroke: currentColor` + `.btn.ghost` 的 `--muted`，
+          在对局深绿底上几乎不可见 → 看起来是「空方块」。
+       ② `.room-head > .info-toggle > span:not(.it-arrow) { display: none }`
+          把「战绩」两字藏了，只留 ▾。而 `.it-arrow` 是 **Unicode 字符**
+          （U+25BE），不是图标 —— 在部分安卓/鸿蒙字体栈里渲染成
+          极小的三角，颜色又是 #9fb2cd，几乎看不见。
+
+     修法（不是调数值，是改结构）：
+       · 房头右侧按钮统一成「28×28 图标按钮」规格，内边距归零但
+         **min-width / min-height 都 ≥28**，图标 15px 居中 —— 保证一定看得见；
+       · 「大厅」保留文字：房头真正的可压缩项是标题，不是返回键。
+         中文「大厅」两字仅 ~26px，去掉它省下的 26px 换来的是
+         「用户不知道这个键干什么」，不划算；
+       · 「战绩」改成 `▾` + `战绩` 同行，且开关状态用**实心/空心**区分，
+         不靠一个默认不可见的三角。
+     ═════════════════════════════════════════════════════════════════════ */
+  /* v0.16.0：房头结构改为 .rh-left + .rh-tools 后，上面的「图标按钮 28×28」
+   * 规格统一收敛到 .hb 一处定义（style.css），这里只补房头自身的收紧项。 */
+  .room-head > .rh-left { gap: 5px; }
+  .room-head > .rh-left > #lobby {
+    flex: 0 0 auto;
+    display: inline-flex; align-items: center; gap: 3px;
+    min-height: 26px; padding: 0 7px 0 4px;
+    font-size: 12px; line-height: 1; color: var(--rp-blue);
+  }
+  .room-head > .rh-left > #lobby .ic { color: var(--rp-blue); }
+  /* 修正（v0.16.0 R4-8b）：IC() 输出的文本是 `<span class="ic">…</span>`，
+   * 不是 `<span>大厅</span>` —— 上一版写 `> span:not(.ic)` 恰好把图标选中、
+   * 把「大厅」正文漏掉，于是文字被压成 0 宽不可见。
+   * 现在按结构选「非 .ic 的 span」，并允许容器查询在极窄时隐藏它。 */
+  .room-head > .rh-left > #lobby > span:not(.ic):not(.rh-back-tx),
+  .room-head > .rh-left > #lobby > .rh-back-tx {
+    display: inline; font-size: 12px; letter-spacing: .5px;
+  }
+  .room-head > .rm-code { flex: 0 0 auto; font-size: 11px; }
+  .room-head > .rh-left > .rm-bet,
+  .room-head > .rh-left > .spec-n { flex: 0 0 auto; font-size: 10.5px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * v0.16.0（R4-9h）桌面/平板：信息面板轨道加高，让三栏各有可用高度
+ * ---------------------------------------------------------------------------
+ * 主规则是 `clamp(132px, 24vh, 176px)` —— 这个区间是为「三张统计卡」定的。
+ * v0.16.0 聊天卡新增「分组标签 + 2×3 短语 + 表情行」后，
+ * 5 段内容的理论高度 = 标签 24 + 短语 50 + 表情 30 + 记录 34 + 输入 40 + 间距 20
+ *                    = 198px，而 24vh 在 800 高桌面只有 192px、
+ * 在 1024 高平板是 176px（被 clamp 封顶）—— 两处都装不下，记录区被压到 5px。
+ *
+ * 桌面/平板的高度是富余的（牌桌本身有 max-height，多给面板不会挤压牌桌），
+ * 所以这里直接提到 `clamp(210px, 26vh, 240px)`：
+ *   · 800 高：208~210px，聊天 190px 左右，记录区 ≈ 3 行；
+ *   · 1024 高：240px（封顶），聊天 220px，记录区 ≈ 5 行。
+ * 仅作用于「非窄屏」——≤620px 竖屏走两段式，另有独立预算（R4-9g）。
+ * ═══════════════════════════════════════════════════════════════════════════ */
+/* 仅在**竖屏/桌面单列**下改轨道；
+ * 横屏（手机上 844×390 之类）走左右分栏，根节点是 `"info main"` 两列，
+ * 这里若再写三行模板会把左右分栏打翻（实测 844×390 左栏跑到顶部、
+ * 牌桌被压到下半屏）—— 所以必须排除矮横屏。 */
+@media not all and (max-width: 620px) {
+  @media not all and (orientation: landscape) and (max-height: 620px) {
+    .card-room, .mahjong-room, .ext-room {
+      grid-template-rows: minmax(0, 1fr) clamp(240px, 30vh, 268px) auto;
+    }
+    .card-room.info-collapsed, .mahjong-room.info-collapsed, .ext-room.info-collapsed,
+    .card-room:has(.info-panel.collapsed), .mahjong-room:has(.info-panel.collapsed),
+    .ext-room:has(.info-panel.collapsed) {
+      grid-template-rows: minmax(0, 1fr) 30px auto;
+    }
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   v0.17.0 R5 横屏适配（style.css R5 段的横屏镜像 —— 本文件在 style.css
+   之后加载，这里的覆写优先级即最终值）
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── R5-4 横屏功能键：保持上下结构，整体紧凑 30px ─────────────────────────
+ * v0.16.0 旧档位（1063-1069 行 / 旧镜像段）把 .hb 压成 24px 横排 ——
+ * 上下结构后高度由内容决定，这里统一为「图标 13 + 两字 8px」的 30px 紧凑型。 */
+.hb { height: 38px; min-height: 38px; flex-direction: column; gap: 1px; }
+@media (orientation: landscape) and (max-height: 620px) {
+  .hb { height: 32px; min-height: 32px; padding: 0 6px; }
+  .hb svg { width: 13px; height: 13px; }
+  .hb-tx { font-size: 8.5px; }
+  .room-head.rh-l2 .hb, .room-head.rh-l3 .hb { height: 30px; min-height: 30px; }
+  .room-head.rh-l3 .hb-tx { display: none; }
+  .room-head.rh-l3 .hb { padding: 0 7px; }
+}
+html.ha-rot-land .hb { height: 32px; min-height: 32px; padding: 0 6px; }
+html.ha-rot-land .hb svg { width: 13px; height: 13px; }
+html.ha-rot-land .hb-tx { font-size: 8.5px; }
+html.ha-rot-land .room-head.rh-l3 .hb-tx { display: none; }
+
+/* ── R5-2 横屏座位卡：沿用 v0.10.20 的横排胶囊段（3552-3669 行，24px 头像），
+ * 该段本身即横向布局，与新横卡方向一致，不再叠一层覆写制造 !important 战争。
+ * 竖屏横长方形卡（头像 34px 级）由 style.css R5-2 段负责。 */
+
+/* ── R5-5 横屏两侧分列：底牌条(左) / 数据浮层(右) ─────────────────────────
+ * 横屏下数据浮层隐藏（.ins-card 形态在左栏），ta-top 只剩底牌条。 */
+@media (orientation: landscape) and (max-height: 620px) {
+  .table-area > .ta-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; width: 100%; }
+  .ta-top .ins-float { position: static; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * v0.21.0（R9-2）聊天收起后不再霸占 2.55fr 空壳 —— 截图实证：
+ * 横屏左栏聊天卡收起后只剩标题条，但网格轨道仍给 2.55fr，
+ * 整块 200px+ 的空白杵在左栏，牌桌高度也被压掉。
+ * 现在 :has() 感知折叠态，把让出的高度分回战绩（1.05fr）与积分（.75fr）。
+ * 三处横屏变体（媒体查询 / ha-rot-land 强制横屏镜像）都要覆盖。 */
+@media (orientation: landscape) and (max-height: 560px) {
+  .room.card-room > .info-panel:has(> .chat-card.folded),
+  .room.mahjong-room > .info-panel:has(> .chat-card.folded) {
+    grid-template-rows: minmax(0, 1.05fr) minmax(0, .75fr) auto 0;
+  }
+}
+html.ha-rot-land .room.card-room > .info-panel:has(> .chat-card.folded),
+html.ha-rot-land .room.mahjong-room > .info-panel:has(> .chat-card.folded) {
+  grid-template-rows: minmax(0, 1.05fr) minmax(0, .75fr) auto 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * v0.24.0（R12-1）结束操作并入中部操作条
+ * --------------------------------------------------------------------------
+ * 病象（用户 v0.23.0 截图）：一局结束后出现两条结果栏 —— 中部「某某 获胜
+ * 等待下一局 + 智囊」+ 底部「某某 获胜 第1局 继续/换桌」，底部那条把
+ * 战绩/积分卡与牌桌聊天压在身下；获胜文案同屏三处。
+ * 合并：牌/麻将/外部游戏的「继续/换桌」直接进操作条（.ab-vote），
+ * 底部 voteBar 只保留给棋盘类（board-room 无操作条）。
+ * ══════════════════════════════════════════════════════════════════════ */
+.actionbar .ab-vote {
+  display: flex; align-items: center; gap: 7px;
+  flex: 0 0 auto;
+}
+.actionbar .ab-vote .vb-count {
+  font-size: 10.5px; color: #7d8ea8;
+  padding: 2px 8px; border-radius: 9px;
+  background: rgba(255, 255, 255, .06); white-space: nowrap;
+}
+.actionbar .ab-vote .btn {
+  height: 40px; min-height: 40px; padding: 0 16px;
+  font-size: 13px; font-weight: 700; border-radius: 11px; white-space: nowrap;
+}
+/* 已经有人选「换桌」：计数转警示色（与旧 vote-bar 语义一致） */
+.actionbar .ab-vote.will-switch .vb-count {
+  color: #ff9f8a; background: rgba(255, 140, 120, .12);
+}
+/* 有投票入口时收结名称行：「等待下一局」由「继续」按钮自明，省出宽度 */
+.actionbar.has-vote .ab-ops-main > .wait.ended {
+  flex: 0 1 auto; min-width: 0;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.actionbar.has-vote .ab-ops-main > .wait.ended i { display: none; }
+/* 极窄屏：局数计数让位（桌面中央「胜者」已有同信息），按钮收窄 */
+@media (max-width: 400px) {
+  .actionbar .ab-vote .vb-count { display: none; }
+  .actionbar .ab-vote .btn { padding: 0 11px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * v0.27.0（R15-5）棋盘房「对战双方条」在横屏侧栏中的落位
+ * --------------------------------------------------------------------------
+ * 棋盘房横屏是「左棋盘 / 右侧栏」两列。旧座位环占侧栏上半区；
+ * 新对战条同为侧栏内容：上半区放双方信息，下半区放操作条。
+ * 棋盘列不动，--bw 几何零回归。
+ * ══════════════════════════════════════════════════════════════════════════ */
+@media (orientation: landscape) and (max-height: 560px) {
+  .room.board-room > .duel-bar {
+    grid-area: side; align-self: start;
+    display: flex; flex-direction: column; gap: 4px;
+    max-width: none; width: 100%; margin: 0; min-width: 0;
+  }
+  .room.board-room > .duel-bar .duel-side { padding: 4px 7px; gap: 5px; border-radius: 10px; }
+  .room.board-room > .duel-bar .ds-ava { width: 28px; height: 28px; }
+  .room.board-room > .duel-bar .ds-txt i { display: none; }
+  .room.board-room > .duel-bar .duel-mid { flex-direction: row; gap: 6px; justify-content: center; padding: 0; }
+}
+html.ha-rot-land .room.board-room > .duel-bar {
+  grid-area: side; align-self: start;
+  display: flex; flex-direction: column; gap: 4px;
+  max-width: none; width: 100%; margin: 0; min-width: 0;
+}
+html.ha-rot-land .room.board-room > .duel-bar .duel-side { padding: 4px 7px; gap: 5px; border-radius: 10px; }
+html.ha-rot-land .room.board-room > .duel-bar .ds-ava { width: 28px; height: 28px; }
+html.ha-rot-land .room.board-room > .duel-bar .ds-txt i { display: none; }
+html.ha-rot-land .room.board-room > .duel-bar .duel-mid { flex-direction: row; gap: 6px; justify-content: center; padding: 0; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * v0.28.0（R16-5 / R16-6）玩法徽章 · 建房玩法卡 · 本房规则面板
+ * 设计基调与系统一致：深底、细描边、鎏金强调「这桌的约定」，
+ * 但玩法用冷蓝以示与彩头（金）区分 —— 一个是规则，一个是赌注。
+ * ══════════════════════════════════════════════════════════════════════════ */
+.room-head .rm-mode {
+  flex: 0 0 auto;
+  font-size: 11px; padding: 1px 7px; border-radius: 8px;
+  background: rgba(79, 140, 255, .16);
+  color: #a9c8ff;
+  border: 1px solid rgba(79, 140, 255, .4);
+  white-space: nowrap; letter-spacing: .3px;
+}
+.room-head.rh-l3 .rh-left .rm-mode,
+.room-head.rh-tight .rh-left .rm-mode { display: none; }
+@media (max-width: 420px) { .room-head .rm-mode { font-size: 10.5px; padding: 1px 6px; } }
+
+/* ── 建房弹窗：玩法卡 ───────────────────────────────────────────────── */
+.mode-box { margin: 10px 0 4px; }
+.mode-hd {
+  display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px;
+}
+.mode-hd span { font-size: 12px; color: #9fb0cc; letter-spacing: .4px; }
+.mode-hd em {
+  flex: 1 1 auto; font-style: normal; font-size: 11px; color: #6f7f9c;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right;
+}
+.mode-cards { display: flex; flex-direction: column; gap: 6px; }
+.mode-card {
+  display: grid; grid-template-columns: 1fr 18px; align-items: center; gap: 8px;
+  width: 100%; text-align: left; cursor: pointer;
+  padding: 8px 10px; border-radius: 11px;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid rgba(120, 145, 200, .2);
+  color: #d8e2f5; transition: border-color .16s var(--ease), background .16s var(--ease), transform .12s var(--ease);
+}
+.mode-card:active { transform: scale(.985); }
+.mode-card .mc-main { min-width: 0; }
+.mode-card .mc-top { display: flex; align-items: center; gap: 6px; }
+.mode-card .mc-mark {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 1px solid rgba(120, 145, 200, .35);
+  position: relative;
+}
+.mode-card.on .mc-mark { border-color: rgba(212, 175, 55, .8); background: rgba(212, 175, 55, .9); }
+.mode-card.on .mc-mark::after {
+  content: ''; position: absolute; left: 4.5px; top: 2px;
+  width: 5px; height: 8px; border: solid #1a1305; border-width: 0 1.6px 1.6px 0;
+  transform: rotate(42deg);
+}
+.mode-card b { font-size: 13px; font-weight: 600; letter-spacing: .2px; }
+.mode-card .mc-tag {
+  font-style: normal; font-size: 9.5px; padding: 0 5px; border-radius: 6px;
+  color: #8fa4bb; border: 1px solid rgba(120, 145, 200, .28); white-space: nowrap;
+}
+.mode-card small {
+  display: block; margin-top: 3px; font-size: 10.5px; line-height: 1.45; color: #7c8aa5;
+}
+.mode-card.on {
+  background: linear-gradient(180deg, rgba(212, 175, 55, .14), rgba(212, 175, 55, .05));
+  border-color: rgba(212, 175, 55, .55);
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, .18) inset;
+}
+.mode-card.on b { color: #ffd76e; }
+.mode-card.on .mc-tag { color: #ffd76e; border-color: rgba(212, 175, 55, .4); }
+
+/* ── 规则面板 ───────────────────────────────────────────────────────── */
+.rules-mask { display: flex; align-items: flex-end; justify-content: center; padding: 0; }
+.rules-sheet {
+  width: 100%; max-width: 520px; max-height: 84vh;
+  display: flex; flex-direction: column;
+  background: linear-gradient(180deg, #141d31, #0c1220 70%);
+  border: 1px solid rgba(212, 175, 55, .26);
+  border-bottom: 0; border-radius: 20px 20px 0 0;
+  box-shadow: 0 -14px 44px rgba(0, 0, 0, .6);
+  animation: rsIn .24s var(--ease);
+}
+@keyframes rsIn { from { transform: translateY(22px); opacity: .4; } to { transform: none; opacity: 1; } }
+.rs-head {
+  display: flex; align-items: flex-start; gap: 9px;
+  padding: 12px 14px 9px; border-bottom: 1px solid rgba(120, 145, 200, .14);
+}
+.rs-book {
+  flex: 0 0 auto; width: 32px; height: 32px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: #ffd76e; background: rgba(212, 175, 55, .13);
+  border: 1px solid rgba(212, 175, 55, .28);
+}
+.rs-tt { flex: 1 1 auto; min-width: 0; }
+.rs-tt b { display: block; font-size: 15px; letter-spacing: .3px; }
+.rs-mode { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; }
+.rs-mode i { font-style: normal; font-size: 10px; color: #74839f; }
+.rs-mode b { font-size: 11.5px; color: #a9c8ff; font-weight: 600; }
+.rs-mode em {
+  font-style: normal; font-size: 9.5px; color: #8fa4bb;
+  border: 1px solid rgba(120, 145, 200, .28); border-radius: 6px; padding: 0 5px;
+}
+.rs-mode-desc {
+  display: block; margin-top: 3px; font-size: 10.5px; line-height: 1.4; color: #74839f;
+}
+.rs-x {
+  flex: 0 0 auto; width: 28px; height: 28px; border-radius: 9px;
+  background: rgba(255, 255, 255, .05); border: 1px solid rgba(120, 145, 200, .2);
+  color: #9fb0cc; font-size: 12px; cursor: pointer;
+}
+.rs-tabs {
+  display: flex; gap: 5px; padding: 8px 12px 6px; overflow-x: auto;
+  scrollbar-width: none; border-bottom: 1px solid rgba(120, 145, 200, .1);
+}
+.rs-tabs::-webkit-scrollbar { display: none; }
+.rs-tab {
+  flex: 0 0 auto; height: 27px; padding: 0 11px; border-radius: 9px; cursor: pointer;
+  font-size: 12px; color: #9fb0cc;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(120, 145, 200, .18);
+}
+.rs-tab.on {
+  color: #0d1220; font-weight: 600;
+  background: linear-gradient(180deg, #ffd76e, #e8b944);
+  border-color: transparent;
+}
+.rs-body {
+  flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 11px 14px calc(16px + var(--ha-sab));
+  font-size: 12.5px; line-height: 1.78; color: #c7d3e8;
+}
+.rs-body .rp { margin: 0 0 9px; color: #9fb0cc; }
+.rs-body .rp-rank {
+  padding: 7px 10px; border-radius: 9px; color: #ffd76e;
+  background: rgba(212, 175, 55, .08); border: 1px solid rgba(212, 175, 55, .2);
+  font-variant-numeric: tabular-nums; line-height: 1.9;
+}
+.rs-body .rl { margin: 0 0 9px; padding-left: 17px; }
+.rs-body .rl li { margin-bottom: 5px; }
+.rs-body .rl li::marker { color: rgba(212, 175, 55, .7); }
+.rs-body b { color: #eaf0fb; font-weight: 600; }
+.rs-body .rt {
+  width: 100%; border-collapse: collapse; margin: 2px 0 10px;
+  font-size: 11px; line-height: 1.6;
+}
+.rs-body .rt th {
+  text-align: left; font-weight: 500; font-size: 10.5px; letter-spacing: .4px;
+  color: #74839f; padding: 5px 7px; border-bottom: 1px solid rgba(120, 145, 200, .22);
+}
+.rs-body .rt td {
+  padding: 6px 7px; vertical-align: top;
+  border-bottom: 1px solid rgba(120, 145, 200, .1);
+}
+.rs-body .rt tr:last-child td { border-bottom: 0; }
+.rs-body .rt .rt-k { color: #ffd76e; white-space: nowrap; font-weight: 500; }
+.rs-body .rt td:nth-child(2) { color: #dbe5f6; }
+/* 示例列不折行，保证「牌型—示例」一眼对得上 */
+.rs-body .rt td:nth-child(3) { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* 桌面端：面板居中成对话框，不要贴着屏幕底 */
+@media (min-width: 720px) and (min-height: 600px) {
+  .rules-mask { align-items: center; padding: 18px; }
+  .rules-sheet { border-radius: 20px; border-bottom: 1px solid rgba(212, 175, 55, .26); max-height: 78vh; }
+}
+
+/* v0.28.0（R16-6）窄屏兜底：房头 10 键占满时，玩法徽章会被 rh-tight 收起，
+ * 而「房号后面要能看到玩法名」是硬要求 —— 于是让房号药丸的第二行首标签
+ * 在窄屏由「房号」切成玩法短名（宽度零增量，语义仍在：这桌叫什么、打什么规矩）。 */
+.room-head .rh-code-mode { display: none; }
+@media (max-width: 462px) {
+  .room-head.rh-tight .rh-left .rh-code-cap,
+  .room-head.rh-l3 .rh-left .rh-code-cap { display: none; }
+  .room-head.rh-tight .rh-left .rh-code-mode,
+  .room-head.rh-l3 .rh-left .rh-code-mode {
+    display: block; font-size: 9px; line-height: 1.1; letter-spacing: .3px;
+    color: #a9c8ff;
+  }
+}
+
+/* ══ v0.30.0（R18-2）操作条触控目标下限（覆盖本文件前面的 min-width:0）══
+ * 单字按钮（双升「过」）只有 27px 宽，拇指容易点空；
+ * 统一 44px（WCAG 2.5.5）。放在文件末尾保证同特异性下优先生效。 */
+.actionbar .ab-ops-main > .btn { min-width: 44px; }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * v0.40.0（R28-4）牌桌「日间」主题 —— 全域主题到达的最后一公里
+ * ----------------------------------------------------------------------
+ * 用户原话：「与玩家对战时主题没有日夜区别，且一直是夜间模式，
+ *            严重污染功能区（叫分区一团黑看不见按钮和分数）」。
+ *
+ * 根因：本文件此前**一行 data-theme 都没有**。整套牌桌（房间底图、
+ * 案几、织纹、座位卡、记牌器、操作条、信息面板）全部写死深绿/深蓝，
+ * 切到浅色主题时只有外壳变白，房间还是一块墨绿 —— 于是「叫分区」
+ * 那种叠加在桌布上的区域，深字压在深底上，等于看不见。
+ *
+ * 处理原则：
+ *   ① 日间不是「把夜色调亮」，而是**另一套光**：暖白纸感 + 浅玉桌布 +
+ *      木色包边，保持同一套构图（远山、竹林、圆月都保留，只是改成淡彩）；
+ *   ② 文字对比度一律 ≥ 4.5:1（由 tools/check-contrast.mjs 机械校验）；
+ *   ③ 只用选择器覆盖，不改动夜间任何一条规则 —— 夜间是已经验证过的，
+ *      不能为了日间去动它。
+ * ══════════════════════════════════════════════════════════════════════ */
+
+html[data-theme="light"] .card-room,
+html[data-theme="light"] .mahjong-room {
+  background-color: #eef2e9;
+  background-image:
+    /* 柔和暗角：日间不能用重暗角，否则四角发脏 */
+    radial-gradient(130% 88% at 50% 44%, transparent 42%, rgba(120, 140, 120, .12) 100%),
+    /* 淡日（替代夜里的圆月） */
+    radial-gradient(circle at 88% 6%, rgba(255, 236, 190, .85) 0 20px, rgba(255, 232, 176, .35) 21px 40px, transparent 41px),
+    /* 远山：淡青绿，透明度压到夜间的六成 */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200' preserveAspectRatio='none'><path d='M0 96 L34 62 L66 84 L98 48 L134 80 L168 52 L204 86 L238 60 L272 90 L308 64 L344 92 L376 72 L400 94 L400 200 L0 200 Z' fill='%238fbfa4' opacity='.42'/><path d='M0 126 L32 100 L70 120 L106 88 L144 116 L180 94 L218 122 L256 98 L296 124 L334 102 L372 126 L400 110 L400 200 L0 200 Z' fill='%2374a98d' opacity='.46'/></svg>"),
+    /* 竹影：淡绿，细而疏 */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300' preserveAspectRatio='none'><g stroke='%237fb99a' stroke-width='1.4' opacity='.34'><path d='M14 300 L11 76'/><path d='M32 300 L37 122'/><path d='M50 300 L46 164'/><path d='M386 300 L389 84'/><path d='M368 300 L363 130'/><path d='M350 300 L355 172'/></g><g fill='%238cc4a6' opacity='.30'><path d='M11 96 l22 -8 -20 17 z'/><path d='M37 142 l-22 -9 20 17 z'/><path d='M46 184 l22 -8 -20 17 z'/><path d='M11 202 l20 -8 -19 16 z'/><path d='M389 104 l-22 -8 20 17 z'/><path d='M363 150 l22 -9 -20 17 z'/><path d='M355 192 l-22 -8 20 17 z'/><path d='M389 210 l-20 -8 19 16 z'/></g></svg>"),
+    /* 底色：暖白到浅青，模拟白天的宣纸 */
+    linear-gradient(180deg, #f6f8ef 0%, #e6eee1 48%, #dbe6d6 100%);
+  background-size: 100% 100%, auto, 100% 46%, 100% 100%, 100% 100%;
+  background-position: center, center, center 6%, center, center;
+  background-repeat: no-repeat;
+}
+
+/* 案几：由紫檀改成浅胡桃，年轮更淡 */
+html[data-theme="light"] .card-room .felt,
+html[data-theme="light"] .mahjong-room .felt {
+  /* v0.41.1（R30）：浅胡桃再深一档。
+   * 原来 #efe3cd→#d8c4a2 几乎和页面底色同亮，牌桌「浮」不起来，
+   * 整页看着像一张白纸中间画了个浅色椭圆 —— 这就是用户说的「淡薄」。
+   * 压到 #e9dabe→#cbb287 后，桌面有了木头的重量，深色牌面反而更跳，
+   * 同时仍是「日间的浅胡桃」，不会跳成夜里的紫檀。 */
+  background:
+    radial-gradient(64% 50% at 50% 8%, rgba(255, 255, 255, .5), transparent 60%),
+    repeating-radial-gradient(ellipse 120% 90% at 50% 46%,
+      rgba(120, 95, 60, .045) 0 5px,
+      rgba(255, 255, 255, .26) 5px 11px,
+      rgba(120, 95, 60, .03) 11px 17px),
+    linear-gradient(168deg, #e9dabe 0%, #dcc7a4 46%, #cbb287 100%);
+  border: 1px solid rgba(142, 112, 72, .38);
+  box-shadow:
+    inset 0 2px 10px rgba(255, 255, 255, .48),
+    inset 0 -8px 24px rgba(140, 110, 70, .22),
+    0 12px 30px rgba(110, 92, 64, .22);
+}
+html[data-theme="light"] .mahjong-room .felt {
+  background:
+    radial-gradient(64% 50% at 50% 8%, rgba(255, 255, 255, .5), transparent 60%),
+    linear-gradient(168deg, #e9f0e4 0%, #dbe8d6 46%, #cbdec6 100%);
+  border-color: rgba(110, 150, 120, .32);
+}
+/* 桌沿那条金线：日间改成哑光铜 */
+html[data-theme="light"] .card-room .felt::after,
+html[data-theme="light"] .mahjong-room .felt::after {
+  opacity: .5;
+}
+
+/* ── 操作条（叫分 / 出牌 / 提示 ……）──
+ * 夜间是「深色玻璃」，日间要变成「白瓷条」，否则按钮文字发灰看不清。 */
+html[data-theme="light"] .actionbar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(246, 249, 252, .98));
+  border-color: var(--hair-1);
+  box-shadow: 0 -4px 16px rgba(60, 80, 120, .07);
+}
+html[data-theme="light"] .actionbar .btn {
+  background: var(--paper);
+  border-color: var(--hair-2);
+  color: var(--rp-1);
+}
+html[data-theme="light"] .actionbar .btn:hover {
+  border-color: var(--link-1);
+  color: var(--link-1);
+}
+html[data-theme="light"] .actionbar .btn.primary {
+  background: linear-gradient(180deg, #2f6fd8, var(--link-0));
+  border-color: var(--link-0);
+  color: var(--paper);
+}
+html[data-theme="light"] .actionbar .btn.ghost {
+  background: transparent;
+  color: var(--ink-1);
+}
+html[data-theme="light"] .actionbar .btn:disabled,
+html[data-theme="light"] .actionbar .btn.off {
+  color: #8b96a8;
+  background: #f2f5f9;
+}
+
+/* ── 状态条（「叫分中 · 当前最高 2 分」）── */
+html[data-theme="light"] .status {
+  color: var(--gold-ink);
+  background: #fdf2d9;
+  border-color: rgba(196, 138, 22, .30);
+}
+
+/* ── 座位卡 ── */
+html[data-theme="light"] .ring-seat {
+  background: rgba(255, 255, 255, .94);
+  border-color: var(--hair-1);
+  color: #26314a;
+  box-shadow: 0 2px 8px rgba(60, 80, 120, .10);
+}
+html[data-theme="light"] .ring-seat .rs-name { color: var(--ink-0); }
+html[data-theme="light"] .ring-seat .rs-st { color: var(--ink-2); }
+html[data-theme="light"] .ring-seat.me {
+  border-color: rgba(22, 80, 184, .45);
+  background: #eaf1ff;
+}
+html[data-theme="light"] .ring-seat.active {
+  border-color: rgba(196, 138, 22, .72);
+  background: #fff8e6;
+  box-shadow: 0 0 0 1px rgba(196, 138, 22, .30), 0 6px 18px rgba(196, 138, 22, .18);
+}
+html[data-theme="light"] .ring-seat.ai .rs-name { color: #a8552a; }
+
+html[data-theme="light"] .oseat {
+  background: rgba(255, 255, 255, .92);
+  border-color: var(--hair-1);
+  color: var(--ink-2);
+}
+html[data-theme="light"] .oseat b { color: var(--ink-0); }
+html[data-theme="light"] .oseat.active { border-color: rgba(196, 138, 22, .6); color: var(--gold-ink); }
+html[data-theme="light"] .oseat.active b { color: var(--gold-ink); }
+
+/* ── 记牌器：夜间是深格浅字，日间反过来，绝不能保留深底 ── */
+html[data-theme="light"] .counter .cv {
+  background: var(--paper);
+  border-color: var(--hair-2);
+}
+html[data-theme="light"] .counter .cv i { color: var(--ink-2); }
+html[data-theme="light"] .counter .cv b { color: var(--ink-0); }
+html[data-theme="light"] .counter .cv.last b { color: var(--rp-gold); }
+html[data-theme="light"] .counter .cv.gone { opacity: .38; }
+html[data-theme="light"] .counter .ct-head,
+html[data-theme="light"] .counter-bar {
+  color: #3c4a63;
+}
+html[data-theme="light"] .counter .ct-k { color: var(--ink-2); }
+html[data-theme="light"] .counter .ct-t { color: var(--ink-0); }
+
+/* ── 出牌区 / 待出区 ── */
+html[data-theme="light"] .lastplay .lp-who { color: var(--ink-3); }
+
+/* ── 信息面板（牌友战绩 / 本房积分 / 牌桌聊天）──
+ * 这一块夜间是 #0d1220 的卡片，日间必须整块转白，
+ * 否则会出现用户截图里那种「上半页白、下半页黑」的割裂。 */
+html[data-theme="light"] .info-card {
+  background: var(--paper);
+  border-color: var(--hair-1);
+  box-shadow: 0 2px 10px rgba(60, 80, 120, .07);
+}
+html[data-theme="light"] .info-card > .ic-hd {
+  border-bottom-color: rgba(30, 60, 120, .12);
+}
+html[data-theme="light"] .info-card > .ic-hd b { color: var(--ink-0); }
+html[data-theme="light"] .info-card > .ic-hd .ic-badge { color: var(--ink-1); background: var(--bg-3); }
+
+/* ── 牌桌内的小气泡 / 动作提示 ── */
+html[data-theme="light"] .act-bubble {
+  background: rgba(255, 255, 255, .97);
+  color: var(--ink-0);
+  border-color: var(--hair-2);
+  box-shadow: 0 6px 18px rgba(60, 80, 120, .14);
+}
+html[data-theme="light"] .act-bubble b { color: var(--link-1); }
+
+/* ── 观战条 ── */
+html[data-theme="light"] .spec-bar {
+  background: rgba(255, 255, 255, .94);
+  color: var(--ink-1);
+  border-color: var(--hair-1);
+}
+
+/* ── 房间顶栏（大厅 / 房号 / 彩头）── */
+html[data-theme="light"] .room-head,
+html[data-theme="light"] .rh {
+  color: var(--ink-0);
+}
+
+/* ── 记牌器 / 牌局数据浮层：日间版（v0.40.0 / R28-4）──
+ * 这两块是**叠在桌布上的玻璃面板**，夜间用深蓝玻璃压在墨绿桌面上很好看；
+ * 日间如果不换，就变成两块黑补丁 —— 用户说的「叫分区一团黑看不见按钮和
+ * 分数」，指的正是这类「深底 + 深字」的叠加层。 */
+html[data-theme="light"] .counter {
+  background: linear-gradient(180deg, rgba(255, 255, 255, .97), rgba(246, 249, 252, .99));
+  border-color: var(--hair-2);
+  box-shadow: 0 4px 14px rgba(60, 80, 120, .10), inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+html[data-theme="light"] .counter .ct-head { color: #54627a; }
+html[data-theme="light"] .counter .ct-t { color: #8a5a00; }
+html[data-theme="light"] .counter .ct-k b { color: var(--ink-0); }
+html[data-theme="light"] .counter .ct-grip { color: #6b7688; }
+html[data-theme="light"] .info-board .ib-item,
+html[data-theme="light"] .info-board .cv {
+  background: rgba(255, 255, 255, .95);
+  border-color: var(--hair-2);
+  color: #26314a;
+}
+
+/* 牌局数据浮层：夜间是「深棕木牌 + 金线」，日间改成「米白木牌 + 铜线」 */
+html[data-theme="light"] .ins-float {
+  background: linear-gradient(180deg, rgba(255, 252, 244, .97), rgba(248, 243, 232, .98));
+  border-color: rgba(180, 140, 70, .45);
+  box-shadow: 0 4px 14px rgba(120, 100, 70, .16), inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+html[data-theme="light"] .ins-float .ins-fhd { color: #6b4d12; border-bottom-color: rgba(180, 140, 70, .28); }
+html[data-theme="light"] .ins-float .ins-fi { color: #3d3527; }
+html[data-theme="light"] .ins-float .ins-fk { color: #7a6a4e; }
+html[data-theme="light"] .ins-float .ins-fv { color: #2a2318; }
+html[data-theme="light"] .ins-float .ins-fv.hi { color: #8a5a00; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * R31 / v0.42.0：候选面板「无牌可压」空态
+ * --------------------------------------------------------------------------
+ * 替代原来那条压住聊天输入 / 游戏卡的深色大 toast。复用 .hint-panel 的
+ * 定位（牌桌内、向上弹、不占网格轨道），只放一行短说明，2.6s 自动消失。
+ * ══════════════════════════════════════════════════════════════════════════ */
+.hint-panel.hp-empty {
+  width: auto; max-width: min(268px, calc(100vw - 24px));
+  padding: 0; cursor: pointer;
+}
+.hint-panel.hp-empty .hp-empty-tx {
+  padding: 9px 12px; font-size: 11.5px; line-height: 1.5;
+  color: #d9e3f4; white-space: normal;
+}
+html[data-theme="light"] .hint-panel.hp-empty {
+  background: var(--bg-2); border-color: var(--line);
+}
+html[data-theme="light"] .hint-panel.hp-empty .hp-empty-tx { color: var(--fg); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * R31 / v0.42.0：H5 / Cocos 外壳皮肤（对照 s1_180054.jpg）
+ * --------------------------------------------------------------------------
+ * 实测两个问题：
+ *   ① 深色顶栏里的「战绩 / 复盘 / 比分赛」用 --rp-3 令牌着色，日间主题下
+ *      该令牌是深色文字，压在深底上几乎看不见（对比度不足 2:1）。
+ *   ② 游戏画面下方动作条被日间令牌刷成浅白，只剩右侧喇叭 + 智囊两枚键，
+ *      左侧一大片空白，与深色游戏画面割裂。
+ * 处理：三键移入动作条（见 ui-games.js extRoom），顶栏只留身份信息并锁亮色；
+ * 动作条统一深色、与顶栏同色系，三键等距铺开填满下沿。
+ * ══════════════════════════════════════════════════════════════════════════ */
+.ext-room .ext-head .hb,
+.ext-room .ext-head .btn.ghost {
+  color: #dce8fb; border-color: rgba(255, 255, 255, .16);
+}
+.ext-room .ext-head .hb:hover,
+.ext-room .ext-head .btn.ghost:hover {
+  color: #fff; background: rgba(255, 255, 255, .1);
+}
+.ext-room > .room-main > .actionbar {
+  background: linear-gradient(180deg, rgba(20, 30, 44, .96), rgba(14, 22, 34, .98));
+  border-top: 1px solid rgba(255, 255, 255, .09);
+  border-bottom: none; border-radius: 0;
+  backdrop-filter: none;
+}
+.ext-room .actionbar .ext-foot-keys {
+  display: flex; align-items: center; gap: 6px;
+  flex: 1 1 auto; min-width: 0;
+}
+.ext-room .actionbar .ext-foot-keys > .btn {
+  flex: 0 1 auto; min-width: 0;
+  height: 34px; min-height: 34px; padding: 0 10px;
+  font-size: 11.5px; border-radius: 9px; white-space: nowrap;
+  color: #d9e5f8; background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .16);
+}
+.ext-room .actionbar .ext-foot-keys > .btn:hover { background: rgba(255, 255, 255, .13); color: #fff; }
+.ext-room .actionbar .ext-foot-keys > .btn.on {
+  color: #ffd98a; background: rgba(255, 215, 110, .14);
+  border-color: rgba(255, 215, 110, .42);
+}
+.ext-room .actionbar .ext-foot-keys .ft-arrow {
+  font-style: normal; font-size: 9px; margin-left: 3px; opacity: .72;
+}
+.ext-room .actionbar .btn.tts {
+  color: #cfe0f5; background: rgba(255, 255, 255, .06);
+  border-color: rgba(255, 255, 255, .16);
+}
+@media (max-width: 380px) {
+  .ext-room .actionbar .ext-foot-keys { gap: 4px; }
+  .ext-room .actionbar .ext-foot-keys > .btn { padding: 0 7px; font-size: 10.5px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * R32 / v0.43.0 —— H5·Cocos 房间 3/7 分栏重绘（用户录屏 + 截图诉求）
+ * --------------------------------------------------------------------------
+ * 用户原话：「不要出现功能看板或聊天框遮挡游戏画面且不能退出的情况」、
+ *           「左侧战绩、记分、聊天三模块……战绩、记分并列居于上部，聊天
+ *            功能模块居于下部，与房间进行 3/7 分配屏幕……该设计扩散至全局
+ *            横屏状态」。
+ *
+ * 旧实现（style.css 3592–3685）把 .ext-room > .info-panel 做成 absolute
+ * 覆盖式抽屉：z-index 30 浮在 iframe 之上，展开即盖住下半屏游戏画面，
+ * 三块白卡与 H5 游戏自带的「继续未完成的战斗」弹窗叠成两层，用户既看不清
+ * 画面也找不到出口 —— 这正是录屏 A 01:12/01:16 与用户截图的症状。
+ *
+ * 新实现：**分区而非覆盖**，游戏画面与信息面板各占一条 grid 轨道，
+ * iframe 高度恒定，不会因展开/收起来回抖动（比旧的「展开时 748→610」
+ * 更稳，Cocos 画布只自适应一次）。
+ *   · 竖屏手机：上 7 游戏画面 / 下 3 信息面板；
+ *   · 横屏（含强制横屏）：左 3 信息面板 / 右 7 游戏画面；
+ *   · 信息面板内部统一「战绩 + 记分并列上 / 聊天占下」；
+ *   · 收起态：信息轨归零，游戏画面吃满，且随时可展开；
+ *   · 顶栏「‹ 大厅」与动作条「退出」双通道，永远在游戏画面之外。
+ * 本段放 table-skin.css 末尾（加载顺序最晚），用 .room.ext-room 提高
+ * 特异度覆盖 style.css 里带 !important 的旧抽屉规则。
+ * ══════════════════════════════════════════════════════════════════════════ */
+.room.ext-room {
+  position: relative;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  /* R33-③：游戏画面恒定满高 —— 信息面板不再占轨道，改覆盖式滑出抽屉 */
+  grid-template-rows: minmax(0, 1fr) !important;
+  grid-template-areas: "main" !important;
+  gap: 0 !important;
+  padding: 0 8px calc(4px + var(--ha-sab, 0px));
+  min-height: 0;
+}
+.room.ext-room > .room-main { grid-area: main; min-height: 0; min-width: 0; }
+
+/* R33-③：H5 / Cocos 房信息面板改为「覆盖式滑出抽屉」。
+ * 这些游戏多数无法真联机、采不到对局数据，常驻 3/7 只会挤占游戏区；
+ * 现默认收起（extInfoOpen=false），游戏画面吃满全屏；点顶部横栏或底部
+ * 动作条的「战绩」才从底部滑出，再点收起。滑出时绝对定位覆盖在游戏下方，
+ * 绝不收缩游戏画面高度。 */
+.room.ext-room > .info-panel {
+  position: absolute !important;
+  left: 8px; right: 8px; bottom: calc(4px + var(--ha-sab, 0px)); top: auto !important;
+  max-height: min(54vh, 430px);
+  transform: translateY(calc(100% + 12px)) !important;
+  transition: transform .22s ease;
+  z-index: 45 !important;
+  border-radius: 14px;
+  background: var(--bg-2);
+  box-shadow: 0 -10px 30px rgba(0,0,0,.32), inset 0 0 0 1px var(--line);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: hidden;
+  /* 战绩 + 记分并列上部，聊天功能模块居下部 */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  grid-template-rows: minmax(0, .4fr) minmax(0, 1fr) !important;
+  grid-template-areas: "rec rank" "chat chat" !important;
+  gap: 5px;
+  padding: 0;
+  align-content: stretch;
+}
+.room.ext-room > .info-panel:not(.collapsed) { transform: translateY(0) !important; }
+.room.ext-room > .info-panel > .rec-card  { grid-area: rec; }
+.room.ext-room > .info-panel > .rank-card { grid-area: rank; }
+.room.ext-room > .info-panel > .chat-card { grid-area: chat; }
+/* 牌局数据卡在抽屉里没有空间，继续交给牌桌内浮层 */
+.room.ext-room > .info-panel > .ins-card { display: none !important; }
+
+/* 顶栏 / 动作条按比例落位；退出键层级最高，永不被 iframe HUD 或面板盖住 */
+.room.ext-room > .room-main > .ext-head {
+  position: relative; z-index: 40; flex: 0 0 auto;
+}
+.room.ext-room > .room-main > .actionbar { flex: 0 0 auto; position: relative; z-index: 40; }
+.room.ext-room > .room-main { grid-template-rows: auto minmax(0, 1fr) auto !important; }
+
+/* ── 横屏：H5 / Cocos 房仍单轨（游戏满高），信息面板只做覆盖抽屉 ─────── */
+@media (orientation: landscape), (min-width: 760px) {
+  .room.ext-room {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+    grid-template-areas: "main" !important;
+    padding: 3px 10px calc(3px + var(--ha-sab, 0px));
+  }
+  /* 横屏左栏：战绩 + 记分并列上，聊天占下（同一套设计语言）。
+   * R32 逐张复核：.5fr（约 70px）放不下标题 + 两行玩家数据，第二行被
+   * .ic-bd 的 overflow:hidden 裁掉；放宽到 .85fr（约 120px）。 */
+  .room.ext-room > .info-panel {
+    grid-template-rows: minmax(0, .85fr) minmax(0, 2.15fr) !important;
+  }
+  /* R32 复核修复①：历史横屏规则（本文件 2717 行 @media ...max-height:560px）
+   * 把 .room-main 改成两轨并 display:none 掉动作条 —— 3/7 分栏下
+   * 「战绩 / 复盘 / 比分赛 / 退出」整条消失，双通道退出只剩顶栏一枚
+   * （实测横屏截图 actionbar display:none、主区第三轨 0px）。显式恢复。 */
+  .room.ext-room > .room-main {
+    grid-template-rows: auto minmax(0, 1fr) auto !important;
+    grid-template-areas: "head" "stage" "actions" !important;
+  }
+  .room.ext-room > .room-main > .actionbar { display: flex !important; }
+  /* R32 复核修复②：左栏只 3 成宽，两列各约 133px，「牌友战绩」标题被挤成
+   * 竖排、徽标折行。收紧标题/徽标，保证并列两卡在窄栏里仍是一行可读。 */
+  .room.ext-room > .info-panel > .rec-card > .ic-hd,
+  .room.ext-room > .info-panel > .rank-card > .ic-hd {
+    gap: 2px !important; padding: 3px 5px 1px !important; min-width: 0;
+  }
+  .room.ext-room > .info-panel > .rec-card > .ic-hd b,
+  .room.ext-room > .info-panel > .rank-card > .ic-hd b {
+    font-size: 10px !important; white-space: nowrap !important;
+    overflow: hidden; text-overflow: ellipsis; min-width: 0;
+  }
+  .room.ext-room > .info-panel > .rec-card > .ic-hd .ic-badge,
+  .room.ext-room > .info-panel > .rank-card > .ic-hd .ic-badge {
+    font-size: 8px !important; padding: 0 3px !important; max-width: 54px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 0 0 auto;
+  }
+}
+html.ha-rot-land .room.ext-room {
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  grid-template-areas: "main" !important;
+}
+html.ha-rot-land .room.ext-room > .info-panel {
+  grid-template-rows: minmax(0, .4fr) minmax(0, 1fr) !important;
+}
+html.ha-rot-land .room.ext-room > .room-main {
+  grid-template-rows: auto minmax(0, 1fr) auto !important;
+  grid-template-areas: "head" "stage" "actions" !important;
+}
+html.ha-rot-land .room.ext-room > .room-main > .actionbar { display: flex !important; }
+
+/* 全屏容器：游戏恒定满高，信息面板只做覆盖抽屉 */
+.room.ext-room:fullscreen,
+.room.ext-room:-webkit-full-screen {
+  grid-template-rows: minmax(0, 1fr) !important;
+  grid-template-areas: "main" !important;
+}
+
+/* ── 棋牌 / 麻将房间横屏：把 3/7 与「上并列下聊天」扩散到全局 ───────────
+ * R32 逐张复核修复：原 .5fr（约 70px）放不下「标题 + 两行玩家数据」，
+ * 第二行被 .ic-bd 的 overflow:hidden 裁掉（实测棋牌横屏日间截图）。
+ * 与 ext 横屏统一放宽到 .85fr（约 120px），并由下方公共规则收紧标题。 */
+@media (orientation: landscape) {
+  .room.card-room, .room.mahjong-room {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 7fr) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+    grid-template-areas: "info main" !important;
+  }
+  .room.card-room > .info-panel,
+  .room.mahjong-room > .info-panel {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, .85fr) minmax(0, 2.15fr) 0 !important;
+    grid-template-areas: "rec rank" "chat chat" "ins ins" !important;
+  }
+  .room.card-room > .info-panel > .rec-card  { grid-area: rec; }
+  .room.card-room > .info-panel > .rank-card { grid-area: rank; }
+  .room.card-room > .info-panel > .chat-card { grid-area: chat; }
+  .room.card-room > .info-panel > .ins-card  { grid-area: ins; display: none !important; }
+}
+html.ha-rot-land .room.card-room,
+html.ha-rot-land .room.mahjong-room {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 7fr) !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  grid-template-areas: "info main" !important;
+}
+html.ha-rot-land .room.card-room > .info-panel,
+html.ha-rot-land .room.mahjong-room > .info-panel {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  grid-template-rows: minmax(0, .85fr) minmax(0, 2.15fr) 0 !important;
+  grid-template-areas: "rec rank" "chat chat" "ins ins" !important;
+}
+html.ha-rot-land .room.card-room > .info-panel > .rec-card,
+html.ha-rot-land .room.mahjong-room > .info-panel > .rec-card { grid-area: rec; }
+html.ha-rot-land .room.card-room > .info-panel > .rank-card,
+html.ha-rot-land .room.mahjong-room > .info-panel > .rank-card { grid-area: rank; }
+html.ha-rot-land .room.card-room > .info-panel > .chat-card,
+html.ha-rot-land .room.mahjong-room > .info-panel > .chat-card { grid-area: chat; }
+html.ha-rot-land .room.card-room > .info-panel > .ins-card,
+html.ha-rot-land .room.mahjong-room > .info-panel > .ins-card { grid-area: ins; display: none !important; }
+
+/* R32 复核修复③：3 成宽左栏的「战绩 / 记分」标题收紧，公共规则。
+ * 覆盖 ext / 棋牌 / 麻将三种房型；放在 media 之外是有意为之：
+ *   · 真横屏（orientation:landscape）—— 生效；
+ *   · 强制横屏类 html.ha-rot-land（设备物理竖屏）—— 同样生效，补上
+ *     ext 段 media 内收紧规则覆盖不到的分支；
+ *   · 竖屏 320px 极窄栏 —— 也防止「牌友战绩」被挤成竖排，属正向优化。
+ * 与 ext 段 5088–5101 取值完全一致，冗余不冲突；不含任何颜色值，
+ * 不影响主题裸色棘轮与对比度闸门。 */
+.room.ext-room > .info-panel > .rec-card > .ic-hd,
+.room.ext-room > .info-panel > .rank-card > .ic-hd,
+.room.card-room > .info-panel > .rec-card > .ic-hd,
+.room.card-room > .info-panel > .rank-card > .ic-hd,
+.room.mahjong-room > .info-panel > .rec-card > .ic-hd,
+.room.mahjong-room > .info-panel > .rank-card > .ic-hd {
+  gap: 2px !important; padding: 3px 5px 1px !important; min-width: 0;
+}
+.room.ext-room > .info-panel > .rec-card > .ic-hd b,
+.room.ext-room > .info-panel > .rank-card > .ic-hd b,
+.room.card-room > .info-panel > .rec-card > .ic-hd b,
+.room.card-room > .info-panel > .rank-card > .ic-hd b,
+.room.mahjong-room > .info-panel > .rec-card > .ic-hd b,
+.room.mahjong-room > .info-panel > .rank-card > .ic-hd b {
+  font-size: 10px !important; white-space: nowrap !important;
+  overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+.room.ext-room > .info-panel > .rec-card > .ic-hd .ic-badge,
+.room.ext-room > .info-panel > .rank-card > .ic-hd .ic-badge,
+.room.card-room > .info-panel > .rec-card > .ic-hd .ic-badge,
+.room.card-room > .info-panel > .rank-card > .ic-hd .ic-badge,
+.room.mahjong-room > .info-panel > .rec-card > .ic-hd .ic-badge,
+.room.mahjong-room > .info-panel > .rank-card > .ic-hd .ic-badge {
+  font-size: 8px !important; padding: 0 3px !important; max-width: 54px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 0 0 auto;
+}
+
+/* R32：外部游戏房「退出」键 —— 双通道里最醒目的一枚，永不与面板同色。
+ * 颜色一律走 --red 令牌（style.css 里浅色主题已把它压到 #b52a3e 过 4.5:1）；
+ * 不再另写浅色主题的硬编码覆写块，避免主题裸色棘轮反弹。 */
+.ext-room .actionbar .ext-foot-keys > .btn.danger-ghost {
+  color: var(--red);
+  border-color: rgba(255, 91, 110, .34);
+  background: rgba(255, 91, 110, .10);
+  font-weight: 700;
+}
+.ext-room .actionbar .ext-foot-keys > .btn.danger-ghost:hover { background: rgba(255, 91, 110, .20); }
+@media (max-width: 420px) {
+  .ext-room .actionbar .ext-foot-keys { gap: 3px; }
+  .ext-room .actionbar .ext-foot-keys > .btn { padding: 0 6px; font-size: 10px; }
+}

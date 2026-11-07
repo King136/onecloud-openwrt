@@ -1,0 +1,422 @@
+/* ==========================================================================
+   HomeArena · 牌面图皮肤层（v0.10.19）
+   --------------------------------------------------------------------------
+   这一层**只做一件事**：把 `.card` 的背景换成真实扑克图，其余全部不动。
+
+   为什么不重写 `.card`：
+     现有 `.card` 的尺寸、叠压、选中抬起、`.sm`/`.xs` 缩放、
+     横屏右列、双行手牌等规则散落在 style.css 与 table-skin.css 里，
+     重写就会把这几十条响应式规则全部推翻 —— 那是拿「已验证的布局」
+     去换「好看的牌面」，不划算。
+
+   所以策略是：**保留原有的盒子模型，只把背景层换成图**。
+     · 用 `--face` 变量注入图片地址（skin.js 逐张牌写 inline 变量）；
+     · 文字角标 `.rk` / `.st` / `.jk` **全部隐藏**（v0.10.19 修正，见 ①）；
+     · 图没加载出来（老浏览器 / 离线丢文件）时自动退回原文字牌面。
+
+   ── v0.10.19 修正：重影 ────────────────────────────────────────────────
+   v0.10.18 的做法是「文字角标压在图上角标之上」，本意是让叠压态更好认牌。
+   实际效果是**重影**：图片左上角本来就有花色点数，再叠一层文字，
+   两层错位 2~4px，像套色没印准，非常廉价。
+   现在改为：图片模式下文字角标彻底隐藏，认牌完全靠图片本身的角标。
+   为保证叠压态（只露 22px）也能看到角标，手牌区的背景改为
+   `background-position: left top` —— 露出的是原图最左侧那一条，
+   正好包含完整角标；出牌区/公共牌完整展示，保持居中。
+
+   ── 牌背 ──────────────────────────────────────────────────────────────
+   `[data-back]` 在 <html> 上，三套牌背共用一个 `--card-back-img` 变量。
+   `.card.back` 保持原来的结构（子元素全部 display:none），只换背景。
+   ========================================================================== */
+
+/* ── 默认值（只有 js 未就绪或降级时才用到） ── */
+:root {
+  --card-back-img: none;
+  --card-face-bg: 118px 160px;   /* 96×130 的 @1.23 铺满 52×74 的牌面 */
+}
+
+/* ==========================================================================
+   ① 图片牌面
+   ========================================================================== */
+html.face-img .room .card {
+  background-color: #fffdf7;
+  background-image: var(--face, none);
+  /* v0.10.19：原图换成 120×165(0.727)、牌盒 52×74(0.703)，比例几乎一致，
+     用 cover 只会裁掉 3% 的右边白边，角标完全不受影响。
+     （旧的一套图是 96×130 但角标被裁，才需要居中和乱调。） */
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  /* 图片自带圆角与描边，这里只补一道极细的外描边保证边缘利落 */
+  border-color: rgba(60, 45, 25, .38);
+  /* 内阴影会盖住牌面，图片模式下压到极轻 */
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, .55) inset,
+    0 3px 8px rgba(0, 0, 0, .48);
+}
+
+/* ── v0.10.19 修复「花色数字重影」 ──────────────────────────────────────
+ * v0.10.18 的设计是「文字角标 + 图上角标叠加」，本意是叠压时更好认牌，
+ * 实测是**重影**：图片左上角本来就有花色与点数，再压一层文字，
+ * 两层错位 2~4px，看起来像印刷套色没对齐，非常廉价。
+ *
+ * 现在的处理：图片模式下文字角标**彻底隐藏**。
+ * 那叠压态怎么认牌？靠 image-rendering + 让角标区始终留在可见条内 ——
+ * 见下面 ② 的「角标裁切窗口」方案：给 .card 加 overflow:hidden 与
+ * 固定的 background-position，并把每张牌的**左边缘吸附**，保证露出的
+ * 那一条永远是原图左侧的角标区（96px 图宽里左侧 30px 就是完整角标）。
+ *
+ * v0.29.0（R17-4）修复「开局一屏白卡 / 快速开始空白牌面」：
+ *   原来文字角标无条件 `display:none !important` —— 只要牌面图还没下载完
+ *   （首局、弱网、手机端带宽被占用时极常见），该窗口里牌既没图也没字，
+ *   就是用户看到的「空白牌面」。现在改为：文字角标**默认可见，作为图片
+ *   未就绪时的兜底**；只有当 skin.js 把 54 张全量预载完成、在 <html> 上
+ *   加上 `.faces-ready` 之后，才把文字隐藏、露出图片。这样任何时刻牌面都
+ *   有内容（要么文字、要么图），绝不再出现空白。
+ *   图加载失败仍由 probe() 切回 'text'（face-img 整段不命中）兜底。 */
+html.face-img .room .card > .rk,
+html.face-img .room .card > .st,
+html.face-img .room .card > .jk {
+  opacity: 1;
+  transition: opacity .18s ease;
+}
+html.face-img.faces-ready .room .card > .rk,
+html.face-img.faces-ready .room .card > .st,
+html.face-img.faces-ready .room .card > .jk {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── 叠压态：整张牌按原生尺寸呈现，靠左对齐 ───────────────────────────
+ * v0.11.0 重做。旧实现有两次「非等比缩放」，用户截图里的角标缺角、
+ * 人像挤成竖条，都是它造成的：
+ *   ① 牌盒 44×(自动) —— 盒子本身不是 1:1.375，图已经被拉过一次；
+ *   ② `background-size: var(--hand-peek, 71%) auto` 写死 71%。
+ *      真实露出率随张数变（17 张 45%、20 张 40%、横屏 17 张 59%），
+ *      按 71% 画 → 图比可见条宽 1.6 倍 → 右侧被下一张压住 → 角标被裁。
+ *
+ * 现在的做法（实测对比过三档方案，视觉最优）：
+ *   牌盒尺寸由 --card-w 按原生 1.375 推导（cards-native.css），
+ *   叠压时图**不缩放**，按牌盒 100% 呈现，靠左对齐 ——
+ *   露出多少由步距决定，露出的那一条永远是完整的「左上角标 + 花色」，
+ *   没有任何裁切、没有任何变形。选中抬起后整张展开，也是同一份像素，
+ *   从叠压到展开是纯粹的位移，不会出现「一选中牌面就变样」。
+ *
+ * 为什么不做「整张缩进可见条」：试过，露 20px 时整图缩到 20px 宽，
+ * 人像牌的脸只剩 3px，比裁掉更不可读。裁切只损失右侧 55% 的空白，
+ * 保留的角标是 100% 原生精度 —— 信息密度反而更高。 */
+html.face-img .room .hand .card {
+  background-size: 100% 100%;
+  background-position: left top;
+}
+/* 选中态：不动尺寸，只靠现有 translateY 上浮 + 高 z-index 表达 */
+html.face-img .room .hand .card.sel {
+  background-size: 100% 100%;
+  background-position: left top;
+}
+
+/* ==========================================================================
+   ②b 麻将牌面（v0.10.20）
+   --------------------------------------------------------------------------
+   27 张 SVG（tiles/W1..P9），100×138，与扑克 120×165 同比例 0.725，
+   所以下面所有 `background-size` 都能和扑克用同一套比例。
+
+   **为什么麻将比扑克还难**：手牌只有 46×62，13~14 张必须叠压才能放下，
+   叠压后每张只露 22~26px。扑克靠左上角角标认牌，麻将**没有角标**——
+   只能靠露出的那条里看得出是几筒几条，所以：
+
+     · 手牌用 `background-size: 100% auto`（整张等比缩进牌盒），
+       不做扑克那种「缩到 71% 只留左条」的处理 —— 麻将缩到 71% 后
+       点数图案会糊成一团色块，反而认不出。
+     · 叠压间距交给 layoutHand()，它保证最右侧那张完整露出；
+       露出的是牌的**左边缘**，所以 `background-position: left center`。
+     · 选中（.sel）抬起 14px 后整张可见，此时铺满即可。
+
+   图模式下文字（`<b>` 点数 + `<sub>` 万/条/筒）隐藏，但**不能用
+   `display:none`** —— 那会让读屏读到一个空牌。用 `opacity:0` 保留
+   盒模型与可访问性文本；这也是为什么渲染时用 `<b>` 而不是直接写数字。
+   v0.29.0（R17-4）：文字默认可见作兜底，仅 `.faces-ready` 后隐藏，
+   与扑克牌面同一套「不空白」策略。
+   ========================================================================== */
+html.face-img .room .tile.mj,
+html.face-img .room .dtile.mj,
+html.face-img .room .mj {
+  background-color: #fffdf7;
+  background-image: var(--face, none);
+  background-size: 100% auto;
+  background-position: center center;
+  background-repeat: no-repeat;
+  /* SVG 自带圆角与厚度条，外描边只留一道极细的，避免双重边框 */
+  border-color: rgba(60, 45, 25, .3);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .42);
+}
+html.face-img .room .tile.mj > b,
+html.face-img .room .tile.mj > sub,
+html.face-img .room .dtile.mj > b,
+html.face-img .room .dtile.mj > sub,
+html.face-img .room .mj > b,
+html.face-img .room .mj > sub {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .18s ease;
+}
+html.face-img.faces-ready .room .tile.mj > b,
+html.face-img.faces-ready .room .tile.mj > sub,
+html.face-img.faces-ready .room .dtile.mj > b,
+html.face-img.faces-ready .room .dtile.mj > sub,
+html.face-img.faces-ready .room .mj > b,
+html.face-img.faces-ready .room .mj > sub {
+  opacity: 0;
+  /* 1px 也不行：SVG 上是纯白，任何残留都会形成一个脏点 */
+  visibility: hidden;
+}
+
+/* 手牌叠压态：只露左侧一条，所以左对齐 */
+html.face-img .room .hand .tile.mj:not(.sel) {
+  background-position: left center;
+}
+/* 牌河：30×41 的小牌，图铺满整张，居中 */
+html.face-img .room .discards .dtile.mj { background-size: 100% 100%; }
+
+/* ==========================================================================
+   ③ 牌背
+   ========================================================================== */
+html.face-img .room .card.back {
+  background-color: #4a2d18;
+  background-image: var(--card-back-img, none);
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  border-color: rgba(217, 179, 106, .58);
+  /* 原来的内描边是给斜条纹用的，图片模式下换成细金边 + 轻内阴影 */
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 240, 200, .18),
+    0 3px 7px rgba(0, 0, 0, .5);
+}
+
+/* ==========================================================================
+   ④ 文字牌面模式（默认兜底，也是用户可选项）
+   --------------------------------------------------------------------------
+   html.face-text 时，一切回到 v0.10.17 的样式 —— 这里**不需要**写任何覆盖，
+   因为 skin.css 的规则全部挂在 html.face-img 下，天然不生效。
+   仅在 html 上连 face-img 都没有（js 没跑起来）时，也要保证是文字牌面，
+   这就是 :root 里 --face 为 none 的意义：图片模式声明了 background-image
+   但变量为空，视觉上仍是纯色底 + 文字，不会出现空白牌。
+   ========================================================================== */
+
+/* ==========================================================================
+   ⑤ 图片加载失败的可见兜底
+   --------------------------------------------------------------------------
+   背景图 404 时浏览器**不触发任何事件**，CSS 也无从得知。
+   所以改用「底层纯色 + 角标文字」来兜：即使图挂了，
+   牌面依然是暖白宣纸底 + 大号角标，功能完全可用。
+   真正探测失败由 skin.js 的 probe() 负责，它会把整站降级为文字牌面。
+   ========================================================================== */
+html.face-img .room .card {
+  /* 这一层作为 background-image 之下的底色，图挂时露出来 */
+  background-color: #fffdf7;
+}
+
+/* ==========================================================================
+   ⑥ 关于「牌桌材质」
+   --------------------------------------------------------------------------
+   素材包里唯一的桌面底图 `table_bg_2.jpg` 是一张纯蓝色径向渐变
+   （1136×768，中央高光 + 深蓝边缘），不是木纹也不是布纹。
+   它和我们水墨青岚皮肤里的紫檀案几（CSS 年轮木纹 + 鎏金包边）
+   是两套完全不同的视觉语言，硬贴上去只会让牌桌像换了张脸。
+   
+   ⇒ 结论：**不采用**。牌桌继续用 CSS 画的紫檀案几。
+      素材包里真正值得化用的是牌面（54 张）与音效，这两项已经接入。
+   ========================================================================== */
+
+/* ==========================================================================
+   ⑦ 手牌区高度修正（v0.10.18 修既有布局缺陷）
+   --------------------------------------------------------------------------
+   **这个问题在图片牌面之前就存在，只是一直没被发现。**
+
+   实测（1024×768，斗地主 17 张）：
+     .hand        padding: 24px 8px 8px;  min-height: 100px
+     .hand .card  height: 82px（.card 基础 74px，桌皮肤放大到 82px）
+     需要的总高   = 24(上) + 82(牌) + 8(下) = 114px
+     .hand 实际高  = max(100, 内容) —— 但牌是 position:absolute，
+                     不参与内容高度计算，所以恒为 100px
+   ⇒ **牌的底部 14px 被裁掉**。
+
+   为什么以前看不出来：文字牌面的角标（点数 + 花色）都在左上角，
+   底部那一条全是空白，裁掉毫无视觉损失。
+   换成图片牌面后，JOKER 的「JOKER」字样、人像牌的下半身正好在底部，
+   一裁就露馅 —— 用户看到的是「牌被切了一刀」。
+
+   修法：把 min-height 提到「牌高 + 上下 padding」的实测值。
+   不用 auto —— 牌是绝对定位，auto 会塌成 0。
+   ========================================================================== */
+.hand {
+  /* 82px 牌 + 24px 上 + 8px 下 = 114px。多给 4px 余量吸收不同 DPR 的取整误差。 */
+  min-height: 118px;
+}
+/* 麻将牌更高（62px + 上下 padding 30px = 92px），原 100px 够用，不动。 */
+.hand.tiles { min-height: 100px; }
+
+/* 横屏矮屏**不要动** .hand 的 min-height。
+ *
+ * 踩过的坑：这里曾写过 `.hand { min-height: 96px }`，本意是「牌面别被裁」，
+ * 但横屏的牌本身只有 48px 高（table-skin.css 横屏段把牌缩到 34×48），
+ * 加 padding 也就 60px —— style.css 原本写的 60px 是完全正确的。
+ * 我按竖屏的 118px 想当然放大，结果横屏手牌区凭空多占 36px，
+ * 把操作条和牌桌整个挤变形（844×390 实测页面错位）。
+ *
+ * ⇒ 结论：**只在竖屏修正**。横屏保持 style.css 的 60px 不动。
+ *    要在横屏验证牌面没被裁，看的是「48px 牌 + 12px padding」而不是竖屏的数字。
+ */
+@media (orientation: landscape) and (max-height: 560px) {
+  .hand { min-height: 60px; }
+  .hand.tiles { min-height: 60px; }
+}
+
+/* ==========================================================================
+   ⑧ 设置面板（牌面 / 牌背 / 语音 / 音乐）
+   ========================================================================== */
+.skin-modal {
+  width: min(94vw, 440px);
+  padding: 0;
+  gap: 0;
+  /* 面板本身不滚动，只有 body 滚 —— 否则头部的关闭按钮会被滚走 */
+  overflow: hidden;
+}
+.skin-modal .m-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--line-2);
+}
+.skin-modal .m-head b { font-size: 15.5px; font-weight: 800; }
+.skin-modal .m-x {
+  width: 28px; height: 28px; border-radius: 8px;
+  border: 1px solid var(--line-2); background: transparent;
+  color: var(--muted); font-size: 17px; line-height: 1; cursor: pointer;
+}
+.skin-modal .m-x:hover { color: var(--fg); border-color: var(--line-2); }
+.skin-modal .m-body {
+  padding: 6px 20px;
+  max-height: min(62vh, 480px);
+  overflow-y: auto;
+}
+.skin-modal .m-foot {
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--line-2);
+}
+.skin-modal .m-foot .btn { width: 100%; }
+
+/* 一行设置项：左边标题+说明，右边控件 */
+.sk-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px dashed var(--line-1, rgba(255,255,255,.06));
+}
+.sk-row:last-child { border-bottom: none; }
+.sk-lb { flex: 1 1 auto; min-width: 0; }
+.sk-lb b { display: block; font-size: 13.5px; font-weight: 700; color: var(--fg); }
+.sk-lb i {
+  display: block; margin-top: 3px;
+  font-size: 11px; line-height: 1.45; font-style: normal;
+  color: var(--muted);
+}
+/* 分段控件 */
+.sk-seg {
+  display: inline-flex;
+  flex: 0 0 auto;
+  padding: 3px;
+  border-radius: 9px;
+  background: rgba(0, 0, 0, .3);
+  border: 1px solid var(--line-2);
+}
+.sk-seg button {
+  min-width: 46px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .16s, color .16s;
+}
+.sk-seg button.on {
+  background: var(--brand, #4f8cff);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(79, 140, 255, .4);
+}
+
+/* 牌背选择：三个缩略图 */
+.sk-backs { display: inline-flex; gap: 8px; flex: 0 0 auto; }
+.sk-backs button {
+  width: 40px; height: 54px;
+  padding: 0;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: border-color .16s, transform .16s;
+}
+.sk-backs button span {
+  display: block;
+  width: 100%; height: 100%;
+  border-radius: 4px;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .5);
+}
+.sk-backs button.on {
+  border-color: var(--brand, #4f8cff);
+  transform: translateY(-2px);
+}
+
+/* 小屏：说明文字换行到标题下方，控件独占一行 */
+@media (max-width: 400px) {
+  .sk-row { flex-wrap: wrap; gap: 8px; }
+  .sk-lb { flex: 1 1 100%; }
+  .sk-seg, .sk-backs { margin-left: auto; }
+}
+
+
+
+/* ==========================================================================
+   v0.11.0（R1-2）家庭厅管理面板样式
+   --------------------------------------------------------------------------
+   视觉上刻意比上半区「低一档」：更小的字号、更淡的描边、折叠后才出现 ——
+   这是管理项，不是日常操作项。摊开后也不能把"牌面与音效"挤出视野，
+   所以输入框高度压到 34/52。
+   ========================================================================== */
+.sk-admin { border-bottom: 1px dashed var(--line-1, rgba(255,255,255,.06)); }
+.sk-admin .sk-lb b { color: #e8d9b0; }
+.sk-admin-body { padding: 2px 0 10px; }
+.sk-admin-body[hidden] { display: none; }
+.sk-admin-body .sk-row { padding: 9px 0; }
+.sk-ta, .sk-num {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 6px 0 8px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--fg);
+  background: rgba(0, 0, 0, .26);
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 9px;
+  outline: none;
+  resize: vertical;
+}
+.sk-ta:focus, .sk-num:focus { border-color: rgba(217, 179, 106, .7); }
+.sk-num { width: 96px; margin-bottom: 0; }
+.sk-admin-msg {
+  min-height: 16px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: rgba(120, 210, 160, .95);
+}
+.sk-admin-msg.err { color: #ff8a7a; }

@@ -1,0 +1,5 @@
+#!/bin/sh
+# 首次启动：启用并拉起 HomeArena
+/etc/init.d/homearena enable 2>/dev/null
+/etc/init.d/homearena start 2>/dev/null
+exit 0

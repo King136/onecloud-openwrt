@@ -1,0 +1,17 @@
+{
+  "name": "HomeArena 家庭棋牌竞技场",
+  "short_name": "HomeArena",
+  "description": "11 款棋牌游戏的家庭对战大厅，支持人机与局域网联机",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f1320",
+  "theme_color": "#0f1320",
+  "lang": "zh-CN",
+  "version": "0.48.0",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "favicon-64.png", "sizes": "64x64", "type": "image/png" },
+    { "src": "icon-256.png", "sizes": "256x256", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

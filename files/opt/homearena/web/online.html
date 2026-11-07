@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>HomeArena 正在连接大厅…</title>
+<meta name="theme-color" content="#080b14">
+<style>
+  :root{
+    --bg:#080b14; --bg2:#0e1526; --line:rgba(255,255,255,.09);
+    --tx:#e8eefb; --dim:#93a1bb; --brand:#4d8dff; --gold:#f0c46a; --red:#e0534b; --green:#3fb27f;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{
+    background:
+      radial-gradient(1100px 620px at 50% -12%, rgba(77,141,255,.20), transparent 62%),
+      radial-gradient(760px 460px at 88% 108%, rgba(240,196,106,.10), transparent 60%),
+      var(--bg);
+    color:var(--tx);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","Noto Sans SC","Microsoft YaHei",sans-serif;
+    display:flex;align-items:center;justify-content:center;padding:28px 20px calc(28px + env(safe-area-inset-bottom));
+  }
+  .hub{width:100%;max-width:390px;text-align:center}
+
+  /* ---- 品牌 ---- */
+  .mark{
+    width:82px;height:82px;margin:0 auto 18px;border-radius:24px;position:relative;
+    background:linear-gradient(150deg,#2b62d6,#17357c);
+    box-shadow:0 18px 42px -16px rgba(77,141,255,.9),inset 0 1px 0 rgba(255,255,255,.22);
+    display:grid;place-items:center;
+  }
+  .mark:after{
+    content:"";position:absolute;inset:-14px;border-radius:36px;border:1px solid rgba(77,141,255,.30);
+    animation:ring 2.6s cubic-bezier(.22,.8,.3,1) infinite;
+  }
+  @keyframes ring{0%{transform:scale(.88);opacity:.9}70%{transform:scale(1.1);opacity:0}100%{opacity:0}}
+  .mark svg{width:38px;height:38px;fill:none;stroke:#fff;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+  h1{margin:0 0 6px;font-size:19px;font-weight:600;letter-spacing:.3px}
+  .sub{margin:0;color:var(--dim);font-size:12.5px;min-height:19px}
+
+  /* ---- 探针列表 ---- */
+  .probe{margin:22px 0 0;display:flex;flex-direction:column;gap:8px}
+  .row{
+    display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:13px;
+    background:rgba(255,255,255,.035);border:1px solid var(--line);
+    font-size:12.5px;color:var(--dim);transition:.28s;
+  }
+  .row .dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.16);flex:none;transition:.28s}
+  .row .host{flex:1;text-align:left;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .st{font-size:11.5px;opacity:.8}
+  .row.run{border-color:rgba(77,141,255,.42);background:rgba(77,141,255,.10);color:#c5d8ff}
+  .row.run .dot{background:var(--brand);box-shadow:0 0 0 0 rgba(77,141,255,.65);animation:pulse 1.15s infinite}
+  .row.ok{border-color:rgba(63,178,127,.5);background:rgba(63,178,127,.12);color:#b6f0d5}
+  .row.ok .dot{background:var(--green)}
+  .row.bad{opacity:.5}
+  .row.bad .dot{background:var(--red)}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(77,141,255,.6)}70%{box-shadow:0 0 0 7px rgba(77,141,255,0)}100%{box-shadow:0 0 0 0 rgba(77,141,255,0)}}
+
+  /* ---- 操作 ---- */
+  .acts{margin:24px 0 0;display:flex;flex-direction:column;gap:10px}
+  button{
+    width:100%;padding:13px;border-radius:13px;border:1px solid transparent;
+    font-size:14.5px;font-weight:600;font-family:inherit;cursor:pointer;transition:.2s;
+  }
+  .btn-p{color:#08101f;background:linear-gradient(180deg,#7fb0ff,#4d8dff);
+    box-shadow:0 12px 26px -14px rgba(77,141,255,.95)}
+  .btn-p:active{transform:translateY(1px)}
+  .btn-g{color:var(--tx);background:rgba(255,255,255,.055);border-color:var(--line)}
+  .btn-g:active{background:rgba(255,255,255,.1)}
+  .hint{margin:16px 0 0;font-size:11.5px;color:#6f7d96;line-height:1.75}
+  .hide{display:none!important}
+
+  /* ---- 自绘输入框（v0.34.0 R22-2）----
+     原生 prompt() 在 WebView 里会被内核接手，标题由内核拼成
+     「网址为 “https://…” 的网页显示：」——每弹一次就把真实服务端地址
+     公开一次。本站所有输入一律自绘，任何情况下都不调原生对话框。 */
+  .dlg-mask{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;
+    padding:20px;background:rgba(4,7,14,.74);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+    opacity:0;transition:opacity .16s}
+  .dlg-mask.on{opacity:1}
+  .dlg-card{width:100%;max-width:400px;padding:18px 16px 14px;border-radius:18px;
+    background:var(--bg2);border:1px solid var(--line);
+    box-shadow:0 26px 60px -24px rgba(0,0,0,.95);
+    transform:translateY(10px) scale(.985);transition:transform .18s}
+  .dlg-mask.on .dlg-card{transform:none}
+  .dlg-mask.shake .dlg-card{animation:dlgShake .32s}
+  @keyframes dlgShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}
+    45%{transform:translateX(5px)}70%{transform:translateX(-3px)}}
+  .dlg-t{font-size:15.5px;font-weight:600;letter-spacing:.2px}
+  .dlg-h{margin-top:7px;font-size:12px;line-height:1.7;color:var(--dim)}
+  .dlg-i{width:100%;margin-top:12px;padding:11px 12px;border-radius:11px;
+    background:rgba(255,255,255,.055);border:1px solid var(--line);color:var(--tx);
+    font:14.5px/1.4 ui-monospace,Menlo,Consolas,monospace;outline:none;transition:.16s}
+  .dlg-i:focus{border-color:rgba(77,141,255,.6);background:rgba(77,141,255,.09)}
+  .dlg-e{min-height:16px;margin-top:6px;font-size:11.5px;color:var(--red)}
+  .dlg-b{display:flex;gap:10px;margin-top:8px}
+  .dlg-b button{flex:1;padding:12px;border-radius:12px;font-size:14px;font-weight:600;
+    font-family:inherit;cursor:pointer;border:1px solid transparent;transition:.18s}
+  .dlg-b .dlg-x{background:rgba(255,255,255,.06);border-color:var(--line);color:var(--tx)}
+  .dlg-b .dlg-ok{background:linear-gradient(180deg,#7fb0ff,#4d8dff);color:#08101f;
+    box-shadow:0 12px 26px -16px rgba(77,141,255,.95)}
+  .dlg-b button:active{transform:translateY(1px)}
+</style>
+</head>
+<body>
+<div class="hub">
+  <div class="mark">
+    <svg viewBox="0 0 24 24"><path d="M3 10.5 12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+  </div>
+  <h1>HomeArena</h1>
+  <p class="sub" id="sub">正在查找局域网棋牌大厅…</p>
+
+  <div class="probe" id="probe"></div>
+
+  <div class="acts" id="acts">
+    <button class="btn-p" id="btnOffline">先玩单机版（推荐）</button>
+    <button class="btn-g hide" id="btnRetry">重新扫描</button>
+    <button class="btn-g hide" id="btnManual">手动填写地址</button>
+  </div>
+
+  <p class="hint" id="hint">最多等待 6 秒；不想等，点上方「先玩单机版」立即进入。<br>连同一个 Wi-Fi 时会自动找到家里的 NAS 大厅（默认 8088）。</p>
+</div>
+
+<script>
+/* ============================================================================
+ * HomeArena 联网外壳（内置在 APK 里，运行于 appassets.local 虚拟源）
+ *
+ * 职责单一：找到局域网里的 Hub 并跳转过去。
+ * 找到之后直接加载 http://<host>:8088/ ，大厅跑在真实源上，
+ * localStorage / 账号 token / 断线重连全部按正常网页逻辑工作。
+ *
+ * 地址来源优先级：
+ *   1) 启动参数 ?server=（原生侧传上次成功的地址）
+ *   2) 原生 savedServer（SharedPreferences 里的 last-ok）
+ *   3) 自动扫描：常见网段 × 8088
+ * 全部失败 → 通知原生降级到内置单机版（index.html）。
+ * ==========================================================================*/
+(function () {
+  var PORT = 8088;
+  var qs = new URLSearchParams(location.search);
+  var boot = (qs.get('server') || '').trim();
+  var BR = window.HA_ANDROID || null;
+
+  var subEl = document.getElementById('sub');
+  var probeEl = document.getElementById('probe');
+  var hintEl = document.getElementById('hint');
+  var btnRetry = document.getElementById('btnRetry');
+  var btnManual = document.getElementById('btnManual');
+  var btnOffline = document.getElementById('btnOffline');
+
+  /**
+   * 自绘输入框（v0.34.0 R22-2）。返回 Promise：确认得到字符串，取消得到 null。
+   * 为什么不用 prompt()：WebView 内核会把标题替换成「网址为 “…” 的网页显示：」，
+   * 等于每次调用都把真实服务端地址念给用户听。这条路径必须彻底消失。
+   */
+  function haPrompt(opt) {
+    opt = opt || {};
+    return new Promise(function (resolve) {
+      var esc = function (s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      };
+      var mask = document.createElement('div');
+      mask.className = 'dlg-mask';
+      mask.innerHTML =
+        '<div class="dlg-card" role="dialog" aria-modal="true" aria-label="' + esc(opt.title || '请输入') + '">' +
+        '<div class="dlg-t">' + esc(opt.title || '请输入') + '</div>' +
+        (opt.hint ? '<div class="dlg-h">' + esc(opt.hint).replace(/\n/g, '<br>') + '</div>' : '') +
+        '<input class="dlg-i" type="text" spellcheck="false" autocapitalize="off" ' +
+        'autocorrect="off" autocomplete="off" inputmode="url" ' +
+        'value="' + esc(opt.value || '') + '" placeholder="' + esc(opt.placeholder || '') + '">' +
+        '<div class="dlg-e"></div>' +
+        '<div class="dlg-b">' +
+        '<button class="dlg-x" type="button">取消</button>' +
+        '<button class="dlg-ok" type="button">确定</button>' +
+        '</div></div>';
+      document.body.appendChild(mask);
+      requestAnimationFrame(function () { mask.classList.add('on'); });
+
+      var input = mask.querySelector('.dlg-i');
+      var errEl = mask.querySelector('.dlg-e');
+      var closed = false;
+
+      function done(val) {
+        if (closed) return;
+        closed = true;
+        document.removeEventListener('keydown', onKey, true);
+        mask.classList.remove('on');
+        setTimeout(function () { if (mask.parentNode) mask.parentNode.removeChild(mask); }, 200);
+        resolve(val);
+      }
+      function shake(msg) {
+        errEl.textContent = msg;
+        mask.classList.add('shake');
+        setTimeout(function () { mask.classList.remove('shake'); }, 340);
+      }
+      function submit() {
+        var v = String(input.value == null ? '' : input.value).trim();
+        if (!v) return shake('请填写大厅地址');
+        if (!/^(https?:\/\/)?[^\s/]+(\/|$)/i.test(v)) return shake('地址格式不正确');
+        done(v);
+      }
+      function onKey(e) {
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(null); }
+        else if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); e.stopPropagation(); submit(); }
+      }
+
+      mask.querySelector('.dlg-x').addEventListener('click', function () { done(null); });
+      mask.querySelector('.dlg-ok').addEventListener('click', submit);
+      mask.addEventListener('click', function (e) { if (e.target === mask) done(null); });
+      document.addEventListener('keydown', onKey, true);
+      setTimeout(function () { try { input.focus(); input.select(); } catch (e) { } }, 60);
+    });
+  }
+
+  /**
+   * 地址归一化（v0.9.1 修复域名支持）：
+   *  - 无协议时按主机类型补：域名/IP 用 http；已是 https 保持不变
+   *  - 只对「纯 IP」补默认端口 8088；域名不补端口（反向代理常跑 443/自定义端口）
+   *  - 保留 path 前缀（如 https://<host>:9443/hub），供反代子路径场景使用
+   */
+  function norm(u) {
+    u = (u || '').trim();
+    if (!u) return '';
+    if (!/^https?:\/\//i.test(u)) u = 'http://' + u;
+    var m = u.match(/^(https?:\/\/)([^/?#]+)(.*)$/i);
+    if (!m) return u.replace(/\/+$/, '');
+    var proto = m[1], hostport = m[2], rest = (m[3] || '').replace(/\/+$/, '');
+    var hasPort = /:\d+$/.test(hostport);
+    var isIPv6 = /^\[.+\]$/.test(hostport);
+    var isIPv4 = /^\d{1,3}(\.\d{1,3}){3}$/.test(hostport);
+    // 只有裸 IPv4 才自动补默认端口；域名交给服务端/反代决定端口
+    if (!hasPort && !isIPv6 && isIPv4) hostport = hostport + ':' + PORT;
+    return proto + hostport + rest;
+  }
+
+  /** 是否为域名（非 IP、非 localhost）—— 域名不参与内网网段扫描 */
+  function isDomainHost(u) {
+    var m = (u || '').match(/^https?:\/\/([^/?#:]+)/i);
+    if (!m) return false;
+    var h = m[1];
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(h)) return false;
+    if (/^\[/.test(h) || h === 'localhost') return false;
+    return /\.[a-z]{2,}$/i.test(h);
+  }
+
+  function row(host) {
+    var d = document.createElement('div');
+    d.className = 'row';
+    d.innerHTML = '<i class="dot"></i><span class="host"></span><span class="st">等待</span>';
+    d.querySelector('.host').textContent = host;
+    probeEl.appendChild(d);
+    return {
+      el: d,
+      set: function (cls, st) {
+        d.className = 'row ' + cls;
+        d.querySelector('.st').textContent = st;
+      }
+    };
+  }
+
+  /* 单次探活（v0.9.1 放宽判定，兼容域名 + 反向代理 + HTTPS）
+   * 判定顺序：
+   *   1) /healthz 返回 2xx 且 JSON 含 ok 字段 -> 强命中（局域网标准部署）
+   *   2) /healthz 任意 2xx/3xx/401/403 响应 -> 服务在线（反代改写了 body 也算通）
+   *   3) 根路径任意 <500 响应 -> 服务在线（没挂 healthz 的老版本）
+   * 用 XHR 而非 fetch：超时可控，Android WebView 对 http 明文源更稳。 */
+  function probe(base, timeout) {
+    return new Promise(function (resolve) {
+      var settled = false;
+      function finish(ok, reason) {
+        if (settled) return;
+        settled = true;
+        resolve({ ok: ok, reason: reason || '' });
+      }
+      function ping(url, cb) {
+        var xhr = new XMLHttpRequest();
+        var localDone = false;
+        var done = function (r) { if (!localDone) { localDone = true; cb(r); } };
+        try {
+          xhr.open('GET', url, true);
+          xhr.timeout = timeout || 1600;
+          xhr.setRequestHeader('Accept', 'application/json,text/html,*/*');
+          xhr.onload = function () {
+            done({ status: xhr.status, text: xhr.responseText || '' });
+          };
+          xhr.onerror = function () { done({ status: 0, err: 'network' }); };
+          xhr.ontimeout = function () { done({ status: 0, err: 'timeout' }); };
+          xhr.onabort = function () { done({ status: 0, err: 'abort' }); };
+          xhr.send();
+        } catch (e) { done({ status: 0, err: 'exception' }); }
+      }
+
+      ping(base + '/healthz', function (r) {
+        if (r.status >= 200 && r.status < 300) {
+          try {
+            var j = JSON.parse(r.text);
+            if (j && (j.ok === true || j.app === 'homearena')) return finish(true, 'healthz');
+            // 2xx 但 body 不是标准 JSON：反代可能包了一层，仍判在线
+            return finish(true, 'healthz-2xx');
+          } catch (e) {
+            return finish(true, 'healthz-nonjson');
+          }
+        }
+        if (r.status === 401 || r.status === 403) return finish(true, 'auth');
+        if (r.status >= 300 && r.status < 400) return finish(true, 'redirect');
+        // healthz 404/500：再试根路径
+        ping(base + '/', function (r2) {
+          if (r2.status > 0 && r2.status < 500) return finish(true, 'root-' + r2.status);
+          var why = r2.err || r.err || '';
+          if (why === 'network') return finish(false, 'dns-or-net');
+          if (why === 'timeout') return finish(false, 'timeout');
+          return finish(false, 'http-' + (r2.status || r.status || 0));
+        });
+      });
+    });
+  }
+
+  function join(url) {
+    window.__haJoined = true;   // v0.36.0：硬看门狗据此让路
+    subEl.textContent = '已找到大厅，正在进入…';
+    hintEl.textContent = url;
+    if (BR && BR.onHubConnected) { try { BR.onHubConnected(url); } catch (e) { } }
+    // 直接跳转到真实源，后续全部按正常网页运行。
+    // 带 path 前缀时（反代子路径）要拼成 <base><path>/，不能简单 url + '/'。
+    var target = url + '/';
+    setTimeout(function () { location.replace(target); }, 220);
+  }
+
+  function fail(reason) {
+    running = false;   // v0.10.7：失败后必须复位，否则兜底定时器判断 running 恒为 true、永不触发
+    // 收敛残留在「探测中」的行，避免看起来还在跑
+    [].forEach.call(probeEl.children, function (n) {
+      if (n.classList.contains('run')) { n.className = 'row bad'; n.querySelector('.st').textContent = '无响应'; }
+    });
+    subEl.textContent = '没找到大厅';
+    var why = '';
+    if (reason === 'dns-or-net') {
+      why = '域名解析失败或网络不可达。<br>可能原因：域名只有 IPv6 记录、当前网络不支持 IPv6；或手机网络不通。';
+    } else if (reason === 'timeout') {
+      why = '连接超时。<br>可能原因：端口未放行 / 反代未启动 / 防火墙拦截。';
+    } else if (/^http-(\d+)$/.test(reason || '')) {
+      why = '服务有响应但返回 HTTP ' + reason.split('-')[1] + '。<br>请确认反代指向的是 HomeArena Hub 而非其他服务。';
+    } else {
+      why = '可能原因：NAS 未开机 / 手机不在同一 Wi-Fi / 端口未用 ' + PORT + '。';
+    }
+    hintEl.innerHTML = why + '<br>可手动填写完整地址（支持域名 + 任意端口 + https），或先玩内置单机版。';
+    btnRetry.classList.remove('hide');
+    btnManual.classList.remove('hide');
+    btnOffline.classList.remove('hide');
+    // v0.36.0（R24-3）：探测失败后 3.5 秒自动兜底到单机版。
+    // 旧版是 8 秒宽限 + 最长 12 秒探测，合计 20 秒才动，用户体感「进不去」。
+    // 用户一旦开始手动填地址/重试，就撤掉自动跳转，别打断他。
+    if (!failTimer) {
+      failTimer = setTimeout(function () {
+        if (running || window.__haJoined || window.__haUserBusy) return;
+        subEl.textContent = '已切换到单机版…';
+        location.replace('index.html');
+      }, 3500);
+    }
+    // v0.9.1：不再自动跳单机版 —— 用户需要看到失败原因；只通知原生更新状态条
+    if (BR && BR.onHubUnreachable) { try { BR.onHubUnreachable(); } catch (e) { } }
+  }
+
+  /* 候选地址：启动参数 → 原生保存值 → 自动扫描（仅纯 IP 场景才扫描） */
+  function candidates() {
+    var list = [];
+    var push = function (u) { u = norm(u); if (u && list.indexOf(u) < 0) list.push(u); };
+    push(boot);
+    if (BR && BR.getSavedServer) {
+      try { push(BR.getSavedServer()); } catch (e) { }
+    }
+    // 常见家庭网段（.1 网关、.10/.100 常见 NAS 静态地址）
+    var subs = [1, 10, 100, 2, 50];
+    var nets = ['192.168.1', '192.168.0', '192.168.31', '192.168.2', '10.0.0', '192.168.50'];
+    var here = (location.hostname || '').match(/^(\d+\.\d+\.\d+)\.\d+$/);
+    if (here) nets.unshift(here[1]);       // 若外壳与 Hub 同网段，优先本网段
+    for (var i = 0; i < nets.length; i++) {
+      for (var j = 0; j < subs.length; j++) push('http://' + nets[i] + '.' + subs[j] + ':' + PORT);
+    }
+    return list;
+  }
+
+  /**
+   * 探活 + 协议自动纠正（v0.9.1）
+   * 很多家庭/云主机把 HomeArena 挂在 Nginx 反代后面，只开 HTTPS(HTTP/2)。
+   * 用户只填域名时我们默认 http，会拿到 ERR_HTTP2_PROTOCOL_ERROR / CORS 失败，
+   * 看起来就是「连不上」。这里在 http 失败时自动换 https 再试一次。
+   */
+  function probeAuto(base, timeout) {
+    return probe(base, timeout).then(function (r) {
+      if (r.ok) return r;
+      var alt = null;
+      if (/^http:\/\//i.test(base)) alt = base.replace(/^http:\/\//i, 'https://');
+      else if (/^https:\/\//i.test(base)) alt = base.replace(/^https:\/\//i, 'http://');
+      if (!alt) return r;
+      return probe(alt, timeout).then(function (r2) {
+        return r2.ok ? { ok: true, reason: r2.reason, url: alt } : r;
+      });
+    });
+  }
+
+  var running = false;
+  var failTimer = null;   // v0.10.7：失败兜底定时器（只挂一次，重试时清掉）
+  function scan() {
+    if (running) return;
+    running = true;
+    probeEl.innerHTML = '';
+    btnRetry.classList.add('hide');
+    // v0.10.7：手动重试时撤掉上一轮的兜底定时器，否则刚重扫就被跳走
+    if (failTimer) { clearTimeout(failTimer); failTimer = null; }
+    btnManual.classList.add('hide');
+    /* v0.36.0：「先玩单机版」首屏常驻，不再等探测失败才出现。
+       没找到大厅的用户不该被迫盯着转圈等超时。 */
+
+    var list = candidates();
+    // ── v0.9.1 关键修复：用户显式填过地址（域名 / 自定义端口 / https）就直接用它，
+    //    不并发、不扫内网，失败时能准确告诉用户原因。
+    var explicit = list.filter(function (u) { return isDomainHost(u) || /^https:/i.test(u) || /:\d+$/.test(u.replace(/^https?:\/\//,'')) && !/^https?:\/\/(\d{1,3}\.){3}\d{1,3}:8088$/.test(u); });
+    if (explicit.length) { return scanExplicit(explicit); }
+
+    var prefer = list.slice(0, 8);
+
+    subEl.textContent = '正在查找局域网棋牌大厅…';
+
+    var views = prefer.map(function (u) { return row(u.replace(/^https?:\/\//, '')); });
+
+    // 并发 4 路。首个候选给足 4s（域名要 DNS + TLS + 首包），其余 1.5s。
+    var idx = 0, alive = true, lastReason = '';
+    function next() {
+      if (!alive) return;
+      if (idx >= prefer.length) return done();
+      var i = idx++;
+      var u = prefer[i];
+      views[i].set('run', '探测中');
+      probeAuto(u, i === 0 ? 1800 : 900).then(function (r) {
+        if (!alive) return;
+        if (r.ok) { alive = false; views[i].set('ok', '已连接'); join(r.url || u); }
+        else {
+          // 只保留第一个失败原因（首个候选才是用户真正关心的地址）
+          if (!lastReason) lastReason = r.reason;
+          views[i].set('bad', '无响应'); next();
+        }
+      });
+    }
+    function done() {
+      if (!alive) return;
+      alive = false; running = false;
+      // 第二轮：扩大扫描（其余网段）
+      var rest = candidates().slice(8, 40);
+      if (!rest.length) return fail(lastReason);
+      subEl.textContent = '继续扩大扫描范围…';
+      var hit = null;
+      var k = 0;
+      (function walk() {
+        if (hit) return;
+        if (k >= rest.length) return fail(lastReason);
+        var batch = rest.slice(k, k + 6); k += 6;
+        Promise.all(batch.map(function (u) {
+          return probe(u, 600).then(function (r) { return r.ok ? u : null; });
+        })).then(function (rs) {
+          hit = rs.filter(Boolean)[0] || null;
+          if (hit) { running = false; join(hit); } else walk();
+        });
+      })();
+    }
+    for (var t = 0; t < 4; t++) next();
+  }
+
+  /** 显式地址（域名 / https / 手填端口）：串行探测，先 http 再 https，结果明确 */
+  function scanExplicit(list) {
+    subEl.textContent = '正在连接 ' + list[0].replace(/^https?:\/\//, '') + ' …';
+    row(list[0].replace(/^https?:\/\//, '')).set('run', '探测中');
+    probeAuto(list[0], 1800).then(function (r) {
+      if (r.ok) { join(r.url || list[0]); return; }
+      fail(r.reason);
+    });
+  }
+
+  /** 手动地址：支持域名 / 自定义端口 / https，探活通过后直接跳转 */
+  function tryManual(v) {
+    if (!v) return;
+    var u = norm(v);
+    subEl.textContent = '正在连接 ' + u + ' …';
+    row(u.replace(/^https?:\/\//, '')).set('run', '探测中');
+    probeAuto(u, 2500).then(function (r) {
+      if (r.ok) { join(r.url || u); }
+      else { reportFail(u, r); }
+    });
+  }
+
+  function reportFail(u, r) {
+    subEl.textContent = '连不上 ' + u;
+    var msg = '连接失败（' + (r.reason || 'unknown') + '）';
+    if (r.reason === 'dns-or-net') msg += '\n域名解析失败或网络不通：若域名只有 IPv6 记录，请确认手机网络支持 IPv6，或改用 IPv4 地址/内网 IP。';
+    else if (r.reason === 'timeout') msg += '\n超时：请确认端口已放行、反向代理已启动。';
+    else if (/^http-/.test(r.reason)) msg += '\n服务有响应但状态码异常，请确认反代指向 HomeArena Hub。';
+    hintEl.textContent = msg;
+    btnRetry.classList.remove('hide');
+    btnManual.classList.remove('hide');
+    btnOffline.classList.remove('hide');
+  }
+
+  btnRetry.addEventListener('click', function () { running = false; scan(); });
+  btnManual.addEventListener('click', function () {
+    // 手动操作中：撤掉自动跳转，把时间留给用户
+    if (failTimer) { clearTimeout(failTimer); failTimer = null; }
+    window.__haUserBusy = true;
+    if (BR && BR.promptServer) { try { BR.promptServer(); return; } catch (e) { } }
+    haPrompt({
+      title: '大厅服务地址',
+      hint: '支持域名、任意端口、https\n例：https://game.example.com:9443 或 192.168.1.10:8088',
+      value: boot || '',
+      placeholder: '192.168.1.10:8088'
+    }).then(function (v) {
+      window.__haUserBusy = false;
+      if (v !== null) tryManual(v);
+    });
+  });
+  btnOffline.addEventListener('click', function () {
+    window.__haJoined = true;
+    location.replace('index.html');
+  });
+
+  // 原生对话框填完地址后回调（v0.9.1 新增）
+  window.HA_TRY_SERVER = function (v) { window.__haUserBusy = false; running = false; tryManual(v); };
+
+  scan();
+
+  /* v0.36.0（R24-3）：6 秒硬上限。
+     就算某个候选地址的 XHR 因为 ROM 的 DNS 行为卡住、Promise 永远不 settle，
+     也必须在 6 秒内把用户送进单机版。旧版在真机上实测卡了 17 秒还没动。 */
+  setTimeout(function () {
+    if (window.__haJoined || window.__haUserBusy) return;
+    location.replace('index.html');
+  }, 6000);
+})();
+</script>
+</body>
+</html>

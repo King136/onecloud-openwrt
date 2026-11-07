@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <script src="ha-adapt.js?v=49"></script>
+  <script>
+  /* v0.39.0（R27-1）：原生 UDP 局域网桥 —— 跨端统一适配层。
+     必须内联在 head 且早于 lan.js，否则发现层已回退到 BroadcastChannel，
+     跨设备永远发现不了。
+
+     ★ R27 真因（真实双进程 UDP 端到端复现）：
+       原生侧 MainActivity.java 用
+         evaluateJavascript("__emit(" + jsStr(msg) + ")")
+       回灌，jsStr 把 UDP 收到的 JSON **文本**包成 JS 字符串字面量，
+       所以 __emit 拿到的是字符串；旧实现直接 __HA_LAN_CB(m) 传下去，
+       lan.js 的 _onMsg 第一行 `if (!m || !m.t) return` 取不到 .t，
+       所有信标被静默丢弃 —— 网络层明明收发正常，界面却永远 0 台设备。
+       六轮闸门全是静态正则（只查源码有没有某字符串），从不跑数据流，
+       因此全绿而真机不通。这里统一在桥层 parse，交付对象给发现层。
+
+     兼容三种壳：HA_ANDROID（安卓）、HA_HARMONY（鸿蒙）、HA_NATIVE（通用）。 */
+  (function () {
+    /* 原生对象可能晚于 <head> 才注入（ArkWeb 的 javaScriptProxy 在页面
+       创建阶段注册，时机不保证早于首个 script）。做有限次延迟探测：
+       探到才挂桥，探不到就诚实回退 BroadcastChannel（界面显示
+       「仅本机多窗口」），绝不假装「原生广播」却一个包也发不出去。 */
+    var tries = 0;
+    function bootBridge() {
+      var N = window.HA_ANDROID || window.HA_HARMONY || window.HA_NATIVE || null;
+      if (N && typeof N.lanPost === 'function') { install(N); return; }
+      if (tries++ < 7) setTimeout(bootBridge, [0, 40, 100, 200, 400, 700, 1100][tries] || 1200);
+    }
+    function install(N) {
+    var subs = [];
+    var stats = { sent: 0, recv: 0, bad: 0, lastErr: '' };
+    function parse(raw) {
+      if (raw && typeof raw === 'object') return raw.t ? raw : null;
+      if (typeof raw !== 'string' || !raw) return null;
+      try {
+        var o = JSON.parse(raw);
+        return (o && typeof o === 'object' && typeof o.t === 'string') ? o : null;
+      } catch (e) { return null; }
+    }
+    function emit(raw, src) {
+      var m = parse(raw);
+      if (!m) { stats.bad++; return; }
+      stats.recv++;
+      /* 原生会把 UDP 包的来源 IP 一起带进来。即使对端信标没带 net 字段，
+         也能据此把它登记为单播目标 —— 后续对局消息走可靠单播。 */
+      if (src && typeof src === 'string' && /^\d{1,3}(\.\d{1,3}){3}$/.test(src)) {
+        if (!m.net || !m.net.ip) m.net = { ip: src, port: 0 };
+        try { if (N.lanAddPeer) N.lanAddPeer(src); } catch (e) { }
+      }
+      /* 同一条消息分发给**所有**订阅者：发现层与对局层各开一个 mesh，
+         旧实现只留一个 __HA_LAN_CB，后开的会覆盖先开的。 */
+      for (var i = 0; i < subs.length; i++) {
+        try { subs[i](m); } catch (e) { }
+      }
+    }
+    window.__HA_NATIVE_LAN = {
+      post: function (m) {
+        try { N.lanPost(JSON.stringify(m)); stats.sent++; }
+        catch (e) { stats.lastErr = String(e); }
+      },
+      onMsg: function (cb) { if (typeof cb === 'function' && subs.indexOf(cb) < 0) subs.push(cb); },
+      offMsg: function (cb) { var i = subs.indexOf(cb); if (i >= 0) subs.splice(i, 1); },
+      __emit: emit,
+      /* 诊断：真机上能直接看到「发了几个包 / 收到几个包 / 丢弃几个」，
+         不再用一句「正在扫描」掩盖链路故障。 */
+      __stats: function () {
+        return { sent: stats.sent, recv: stats.recv, bad: stats.bad,
+                 lastErr: stats.lastErr, subs: subs.length };
+      },
+      /* AP 隔离 / 广播被路由器吞掉时的手动单播直连兜底 */
+      __addPeer: function (ip) {
+        try { return N.lanAddPeer ? !!N.lanAddPeer(String(ip)) : false; }
+        catch (e) { return false; }
+      },
+      __info: function () {
+        try { return N.lanInfo ? String(N.lanInfo() || '') : ''; }
+        catch (e) { return ''; }
+      },
+      kind: 'native-udp'
+    };
+    }
+    bootBridge();
+  })();
+  </script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>HomeArena 家庭棋牌竞技场</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="favicon-64.png">
+  <link rel="apple-touch-icon" href="icon-256.png">
+  <!-- v0.35.0（R23-4）：前端版本的单一真源。
+       之前 standalone.js 里写着 `window.__HA_VERSION || '0.32.0'`，
+       而这个全局变量**从来没被赋过值** —— 于是离线版界面上的版本号
+       从 v0.32.0 起就一直是错的（一路升到 0.34 都显示 0.32.0）。
+       升版时只改这一行，standalone.js 读它。 -->
+  <meta name="ha-version" content="0.48.0">
+  <meta name="theme-color" content="#0b0f1a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- v0.34.0（R22-5）主题必须在首帧之前定下来。
+       放到 ui.js 里做的话，页面会先按深色画一遍再翻成浅色 —— 那一下
+       「闪黑」比不做还难受。这里内联执行，成本可以忽略。 -->
+  <script>
+    (function () {
+      var m = 'auto';
+      try { m = localStorage.getItem('homearena.theme') || 'auto'; } catch (e) { }
+      /* R32 / v0.43.0：三档，与 ui.js 的 THEME_MODES 一致。
+         旧的 times（按时段）已下线，老存档读到它会回落到跟随系统。 */
+      if (['auto', 'light', 'dark'].indexOf(m) < 0) m = 'auto';
+      var sysDark = true;
+      try {
+        sysDark = !window.matchMedia || !window.matchMedia('(prefers-color-scheme: light)').matches;
+      } catch (e) { sysDark = true; }
+      var dark = m === 'dark' || (m === 'auto' && sysDark);
+      var el = document.documentElement;
+      el.setAttribute('data-theme', dark ? 'dark' : 'light');
+      el.setAttribute('data-theme-mode', m);
+      try {
+        var mt = document.querySelector('meta[name="theme-color"]');
+        if (mt) mt.setAttribute('content', dark ? '#0b0f1a' : '#f2f5fb');
+      } catch (e) { }
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css?v=49">
+  <!-- v0.11.0 原生牌面规范：牌盒尺寸由 --card-w 按原生 1:1.375 推导。
+       必须排在 style.css 之后（覆盖 .card 的 52×74）、table-skin.css 之前
+       （table-skin 各断点要用到 --card-w / --card-ar）。 -->
+  <link rel="stylesheet" href="cards-native.css?v=49">
+  <link rel="stylesheet" href="table-skin.css?v=49">
+  <!-- v0.10.18：牌面图/牌背皮肤层。必须排在 table-skin.css 之后，
+       它用 <html> 上的 .face-img / data-back 覆盖牌面与牌背样式。 -->
+  <link rel="stylesheet" href="skin.css?v=49">
+  <!-- v0.33.0（R21-2）用户画像后台样式（仅管理员可见，但样式随包发） -->
+  <link rel="stylesheet" href="analytics.css?v=49">
+  <script>
+    /* v0.36.0（R24-2）：启动看门狗。
+       任何原因（同步脚本 404 卡 DNS、脚本语法错、原生拦截异常、传输层
+       抛错）导致 #app 里的 .boot 占位 9 秒后还在，就地强行拉起单机版，
+       不让用户面对一个永远转圈的空白页 —— 这正是本轮录屏里的现象。
+       这个脚本不依赖任何外部文件，是最后一道不依赖 JS 主链的保险。 */
+    (function () {
+      function rescue() {
+        var app = document.getElementById('app');
+        if (!app || !app.querySelector('.boot')) return;
+        /* v0.40.0：用户正停在「选择游戏方式」首屏时不能抢屏 —— 否则
+           停留超过 9 秒会被强行拉进单机版，看起来像「选择页自己消失了」。 */
+        if (document.querySelector('.ha-mode')) return;
+        try {
+          if (window.HALocalTransport && window.HomeArenaUI && window.HomeArenaUI.mountUI) {
+            window.__HA_OFFLINE = true;
+            document.documentElement.setAttribute('data-ha-mode', 'offline');
+            window.HomeArenaUI.mountUI(new window.HALocalTransport());
+            return;
+          }
+        } catch (e) { }
+        app.innerHTML = '<div class="boot" style="flex-direction:column;gap:10px;text-align:center;padding:24px">'
+          + '<b style="font-size:16px;color:var(--fg,#eaf0fb)">页面加载超时</b>'
+          + '<span style="max-width:300px;line-height:1.6">资源没能完整载入，点下面的按钮重试。</span>'
+          + '<button class="btn primary" style="margin-top:8px" onclick="location.reload()">重新加载</button>'
+          + '</div>';
+      }
+      setTimeout(rescue, 9000);
+    })();
+  </script>
+</head>
+<body>
+  <main id="app"><div class="boot"><i class="spin"></i><span>正在连接棋牌大厅…</span></div></main>
+  <!-- v0.40.0（R28-1）：内置 socket.io 客户端。
+       旧版引用同源 /socket.io/socket.io.js —— 在 APK/HAP 的本地壳里必然 404，
+       于是「在线模式」只能靠 location.replace 跳页，跳页又导致登录死循环。
+       打进包里（47KB）之后，在线模式在本地壳内直连远端，再也不跳页。 -->
+  <script src="socket.io.min.js?v=49"></script>
+  <script src="icons.js?v=49"></script>
+  <script src="avatar.js?v=49"></script>
+  <script src="sound.js?v=49"></script>
+  <script src="jszip.min.js"></script>
+  <script src="fx.js?v=49"></script>
+  <script src="table-engine.js?v=49"></script>
+  <script src="skin.js?v=49"></script>
+  <script src="covers.js?v=49"></script>
+  <script src="ext-import.js?v=49"></script>
+  <script src="music.js?v=49"></script>
+  <script src="ha-store.js?v=49"></script>
+  <script src="ha-identity.js?v=49"></script>
+  <script src="ha-remind.js?v=49"></script>
+  <script src="ui.js?v=49"></script>
+  <script src="ui-games.js?v=49"></script>
+  <!-- R20 离线单机版：规则引擎 + 写死密文配置 + 本地传输层，必须在 app.js 之前加载 -->
+  <script src="local-games.js?v=49"></script>
+  <script src="secure-config.js?v=49"></script>
+  <!-- v0.33.0（R21-2）设备画像采集：只采设备能力，不碰任何输入内容 -->
+  <script src="analytics-client.js?v=49"></script>
+  <script src="standalone.js?v=49"></script>
+  <!-- R20 局域网自动发现与组网联机 + 离线 H5/Cocos 自由导入（均须先于 app.js） -->
+  <script src="lan.js?v=49"></script>
+  <script src="h5-import.js?v=49"></script>
+  <!-- v0.40.0（R28-1）接入模式：单机/局域网/在线。必须早于 app.js。 -->
+  <script src="mode.js?v=49"></script>
+  <script src="app.js?v=49"></script>
+</body>
+</html>

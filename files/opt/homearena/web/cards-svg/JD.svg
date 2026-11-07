@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 165" width="120" height="165" shape-rendering="geometricPrecision"><rect x="0.5" y="0.5" width="119" height="164" rx="7" fill="#fffdf7" stroke="#8c7a5c" stroke-width="1"/><g transform="translate(9,5) scale(0.2679)"><path d="M92 0 L92 76 C 92 98 78 112 56 112 C 36 112 22 104 16 88 L36 78 C 40 88 46 94 56 94 C 68 94 74 88 74 76 L74 0 Z M74 100 L92 100 L92 112 L74 112 Z" fill="#c8102e" fill-rule="evenodd"/></g><g transform="translate(9,36) scale(1.0833)" fill="#c8102e"><path d="M12 1.6 L21.6 12 L12 22.4 L2.4 12 Z"/></g>
+    <g>
+      <!-- 框 -->
+      <rect x="14" y="14" width="92" height="137" rx="4"
+            fill="none" stroke="#c8102e" stroke-width="1.4"/>
+      <!-- 头 -->
+      <ellipse cx="60" cy="56" rx="17" ry="20" fill="#f6e3c8" stroke="#c8102e" stroke-width="1.2"/>
+      <!-- 发 -->
+      <path d="M43 50 C43 32 50 24 60 24 C70 24 77 32 77 50
+               C74 42 68 38 60 38 C52 38 46 42 43 50 Z" fill="#c8102e"/>
+      <!-- 冠（K/Q 才有） -->
+      
+      <!-- 眼 -->
+      <circle cx="53" cy="55" r="1.6" fill="#c8102e"/>
+      <circle cx="67" cy="55" r="1.6" fill="#c8102e"/>
+      <!-- 身/袍 -->
+      <path d="M30 150 C30 110 42 84 60 84 C78 84 90 110 90 150 Z"
+            fill="#c8102e" opacity="0.92"/>
+      <path d="M60 84 L48 118 L60 138 L72 118 Z" fill="#d4af37" opacity="0.85"/>
+      <!-- 手持物（K 剑 / Q 花 / J 杖） -->
+      
+      
+      <rect x="30" y="96" width="4" height="46" rx="2" fill="#d4af37"/>
+      <!-- 注意：v0.11.0 去掉了「中央小花色」。
+           原先在袍子正中放一枚金色花色，本意是加强辨识，实测是**脏**：
+           它和袍子的金色菱形叠在一起，缩到 20px 宽时糊成一团泥。
+           人像牌的辨识靠左上角标（那是永远完整露出的部分）就够了。 -->
+    </g><g transform="translate(120,165) rotate(180)"><g transform="translate(9,5) scale(0.2679)"><path d="M92 0 L92 76 C 92 98 78 112 56 112 C 36 112 22 104 16 88 L36 78 C 40 88 46 94 56 94 C 68 94 74 88 74 76 L74 0 Z M74 100 L92 100 L92 112 L74 112 Z" fill="#c8102e" fill-rule="evenodd"/></g><g transform="translate(9,36) scale(1.0833)" fill="#c8102e"><path d="M12 1.6 L21.6 12 L12 22.4 L2.4 12 Z"/></g></g></svg>

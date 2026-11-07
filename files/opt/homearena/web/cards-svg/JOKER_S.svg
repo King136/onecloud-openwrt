@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 165" width="120" height="165" shape-rendering="geometricPrecision"><rect x="0.5" y="0.5" width="119" height="164" rx="7" fill="#fffdf7" stroke="#8c7a5c" stroke-width="1"/>
+    <g>
+      <rect x="12" y="12" width="96" height="141" rx="5" fill="none"
+            stroke="#101418" stroke-width="1.4"/>
+      <!-- 帽 -->
+      <path d="M34 58 L44 26 L52 48 L60 20 L68 48 L76 26 L86 58 Z"
+            fill="#101418"/>
+      <circle cx="60" cy="20" r="4" fill="#d4af37"/>
+      <!-- 脸 -->
+      <ellipse cx="60" cy="78" rx="22" ry="24" fill="#fdf6e8" stroke="#101418" stroke-width="1.4"/>
+      <circle cx="52" cy="74" r="2.4" fill="#101418"/>
+      <circle cx="68" cy="74" r="2.4" fill="#101418"/>
+      <path d="M50 88 C56 96 64 96 70 88" fill="none" stroke="#101418" stroke-width="2"/>
+      <!-- 领 -->
+      <path d="M38 100 C44 108 76 108 82 100 L88 126 C74 136 46 136 32 126 Z"
+            fill="#101418" opacity="0.9"/>
+      <!-- v0.11.0：去掉底部 "JOKER" 长字。
+           叠压时只露左侧 ~40%，这行字永远看不见；展开时又与左上角标重复，
+           像贴了两张标签。改成：底部一道细色带 + 左右各一枚小星，
+           安静但有"王牌"的分量。 -->
+      <rect x="26" y="146" width="68" height="3" rx="1.5" fill="#101418" opacity="0.55"/>
+      <circle cx="46" cy="138" r="2.2" fill="#d4af37"/>
+      <circle cx="60" cy="141" r="2.2" fill="#d4af37"/>
+      <circle cx="74" cy="138" r="2.2" fill="#d4af37"/>
+    </g></svg>

@@ -1,0 +1,19 @@
+{
+  "name": "homearena-hub",
+  "version": "0.48.0",
+  "private": true,
+  "description": "HomeArena v0.6.0：NAS 家庭棋牌竞技场（大厅+11款游戏+超人AI桥[Stockfish WASM/斗地主AI/中国象棋UCCI]+智囊+战绩/复盘/快速匹配+持久化与断线重连+响应式PWA+单机离线版）",
+  "scripts": {
+    "start": "node server/index.js",
+    "build:standalone": "node standalone-src/build.mjs"
+  },
+  "dependencies": {
+    "chess.js": "^1.4.0",
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "socket.io-client": "^4.7.5"
+  }
+}

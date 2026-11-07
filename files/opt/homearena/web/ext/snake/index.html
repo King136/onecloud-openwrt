@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<title>贪吃蛇·联机</title>
+<style>
+  html,body{margin:0;height:100%;background:#0d1f16;color:#d9efe2;font-family:system-ui,-apple-system,"PingFang SC",sans-serif;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
+  #hd{display:flex;gap:14px;align-items:baseline;font-size:13px;padding:6px 0}
+  #hd b{font-size:16px;color:#ffd76e}
+  #wrap{flex:1;width:100%;display:flex;align-items:center;justify-content:center;min-height:0;padding:6px}
+  canvas{background:#122b1e;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.45);display:block;touch-action:none}
+  #pad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(2,56px);gap:6px;margin-top:10px}
+  #pad button{border:0;border-radius:12px;background:#1d4630;color:#cfe9d8;font-size:22px}
+  #pad button:active{background:#2a6b47}
+  #tip{font-size:11px;opacity:.55;margin-top:6px}
+</style>
+</head>
+<body>
+<div id="hd">得分 <b id="sc">0</b> · <span id="mode">本地模式</span></div>
+<div id="wrap"><canvas id="cv" width="480" height="480"></canvas></div>
+<div id="pad">
+  <span></span><button data-d="u">▲</button><span></span>
+  <button data-d="l">◀</button><button data-d="d">▼</button><button data-d="r">▶</button>
+</div>
+<div id="tip">方向键 / 滑动 / 按钮操控 · 家人同屏联机由大厅桥协议提供</div>
+<script>
+/* HomeArena 外部游戏示例：联机贪吃蛇（纯 H5，零依赖）
+ * ── HA 桥协议（与宿主 postMessage 通信）──────────────────────────
+ * 宿主→游戏：{ns:'ha', type:'init', seat, room, engine, players:[{seat,type,name,isMe,aiLevel}]}
+ *            {ns:'ha', type:'room',  players:[...]}          座位/名单变化
+ *            {ns:'ha', type:'peer',  from, data}             其他玩家经服务器转发的消息
+ * 游戏→宿主：{ns:'ha-game', type:'ready'}                    就绪
+ *            {ns:'ha-game', type:'peer',  data}              经服务器组播给房内其他人
+ * ── 联机模型 ────────────────────────────────────────────────────
+ * 权威端 = seat 0（房主）。非权威端只发本地方向 {dir}，权威端汇总模拟后
+ * 每 140ms 组播一帧 {sync}，所有人（含权威端自己）按帧渲染。
+ * AI 座位（type==='ai'）由权威端托管简单寻食 AI。 */
+(function(){
+  const N=24, TICK=140;
+  let CS=20;                       // 每格像素，随容器自适应
+  const cv=document.getElementById('cv'), cx=cv.getContext('2d');
+  /** 画布随容器尺寸自适应：取容器短边做正方形，保证格子是正方形 */
+  function fit(){
+    try{
+      const wrap=document.getElementById('wrap');
+      const pad=8;
+      const w=Math.max(180,(wrap.clientWidth-pad)), h=Math.max(180,(wrap.clientHeight-pad));
+      const side=Math.min(w,h);
+      CS=Math.max(12,Math.floor(side/N));
+      const px=CS*N;
+      if(cv.width!==px||cv.height!==px){ cv.width=px; cv.height=px;
+        cv.style.width=px+'px'; cv.style.height=px+'px'; paint(); }
+    }catch(e){}
+  }
+  window.addEventListener('resize',fit);
+  window.addEventListener('orientationchange',()=>setTimeout(fit,120));
+  const scEl=document.getElementById('sc'), modeEl=document.getElementById('mode');
+
+  let bridge=null;             // {seat, players, isAuth}
+  let me={dir:'r', pend:[]};
+  let world=null;              // {snakes:{seat:{body,dir,alive,score}}, food:{x,y}}
+  let peers=new Map();         // seat -> 最新 dir（权威端消费）
+
+  const P={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]};
+  const OPP={u:'d',d:'u',l:'r',r:'l'};
+  const HUES=['#39d98a','#5aa2ff','#ff7a6b','#ffd76e','#c98bff'];
+
+  /* ---------- 桥 ---------- */
+  function post(msg){ try{ parent.postMessage(Object.assign({ns:'ha-game'},msg),'*'); }catch(e){} }
+  window.addEventListener('message',(ev)=>{
+    const d=ev.data; if(!d||d.ns!=='ha') return;
+    if(d.type==='init'){ bridge={seat:d.seat,players:d.players||[],isAuth:d.seat===0}; onPlayers(d.players); modeEl.textContent='联机模式 · '+(d.seat+1)+' 号位'+(bridge.isAuth?'（权威端）':''); start(); post({type:'ready'}); }
+    else if(d.type==='room'){ if(bridge){ bridge.players=d.players; onPlayers(d.players);} }
+    else if(d.type==='peer'){ if(!bridge) return;
+      if(d.data && d.data.sync && bridge.isAuth) return;
+      if(d.data && d.data.sync){ world=d.data.sync; paint(); return; }
+      if(d.data && d.data.dir!=null && bridge.isAuth){ peers.set(d.from,d.data.dir); return; }
+    }
+  });
+
+  function onPlayers(ps){ if(!bridge) return; bridge.players=ps;
+    // 权威端开始/继续时为所有座位建蛇（人类空位=未加入也托管 AI，家庭场景更热闹）
+    if(bridge.isAuth){ ensureWorld(); } }
+
+  /* ---------- 世界 ---------- */
+  function rndFood(taken){ for(let i=0;i<200;i++){ const f={x:(Math.random()*N)|0,y:(Math.random()*N)|0};
+      if(!taken.some(s=>s.alive&&s.body.some(b=>b.x===f.x&&b.y===f.y))) return f; } return {x:0,y:0}; }
+  function ensureWorld(){
+    if(!world){ world={snakes:{},food:{x:12,y:12}}; }
+    const ps=(bridge&&bridge.players)||[{seat:0,type:'human'}];
+    const n=Math.max(ps.length, 1);
+    for(let i=0;i<n;i++){
+      if(!world.snakes[i]){
+        const sx=4+i*5, sy=(i%2)?N-6:6;
+        world.snakes[i]={body:[{x:sx,y:sy},{x:sx-1,y:sy},{x:sx-2,y:sy}],dir:['r','d','l','u'][i%4],alive:true,score:0};
+      }
+    }
+    world.food=rndFood(Object.values(world.snakes));
+  }
+
+  /* ---------- 权威模拟 ---------- */
+  function step(){
+    if(!bridge||!bridge.isAuth) return;
+    ensureWorld();
+    const sn=world.snakes, taken=Object.values(sn);
+    // AI 座位 / 空人类座位：简单寻食
+    for(const k of Object.keys(sn)){
+      const s=sn[k], i=+k;
+      const isAI=(bridge.players[i]&&bridge.players[i].type==='ai')||!bridge.players[i]||(bridge.players[i]&&!bridge.players[i].isMe&&!peers.has(i)&&false);
+      if(bridge.players[i]&&bridge.players[i].type==='human'){ const d=peers.get(i); if(d&&d!==OPP[s.dir]) s.dir=d; }
+      else { // AI：朝食物贪心走
+        const f=world.food, h=s.body[0];
+        const cand=['u','d','l','r'].filter(d=>d!==OPP[s.dir]);
+        cand.sort((a,b)=>dist(h,P[a],f)-dist(h,P[b],f));
+        s.dir=cand[0]||s.dir;
+      }
+      if(!s.alive) continue;
+      const h=s.body[0], nd={x:h.x+P[s.dir][0], y:h.y+P[s.dir][1]};
+      const hitWall=nd.x<0||nd.y<0||nd.x>=N||nd.y>=N;
+      const hitSelf=taken.some(t=>t.alive&&t.body.some(b=>b.x===nd.x&&b.y===nd.y));
+      if(hitWall||hitSelf){ s.alive=false; continue; }
+      s.body.unshift(nd);
+      if(nd.x===world.food.x&&nd.y===world.food.y){ s.score++; world.food=rndFood(taken); }
+      else s.body.pop();
+    }
+    // 复活：3 帧后原点重生
+    for(const k of Object.keys(sn)){ const s=sn[k];
+      if(!s.alive){ s.deadT=(s.deadT||0)+1; if(s.deadT>3){ s.alive=true; s.deadT=0;
+        const i=+k, sx=4+i*5, sy=(i%2)?N-6:6; s.body=[{x:sx,y:sy},{x:sx-1,y:sy},{x:sx-2,y:sy}]; s.dir=['r','d','l','u'][i%4]; } } }
+    post({type:'peer',data:{sync:world}});
+    paint();
+  }
+  function dist(h,d,f){ return Math.abs(h.x+d[0]-f.x)+Math.abs(h.y+d[1]-f.y); }
+
+  /* ---------- 渲染 ---------- */
+  function paint(){
+    cx.clearRect(0,0,cv.width,cv.height);
+    cx.fillStyle='#122b1e'; cx.fillRect(0,0,cv.width,cv.height);
+    cx.strokeStyle='rgba(255,255,255,.04)';
+    const SZ=CS*N;
+    for(let i=0;i<=N;i++){ cx.beginPath();cx.moveTo(i*CS,0);cx.lineTo(i*CS,SZ);cx.stroke();
+      cx.beginPath();cx.moveTo(0,i*CS);cx.lineTo(SZ,i*CS);cx.stroke(); }
+    if(!world) return;
+    cx.fillStyle='#ff9f43'; cx.beginPath(); cx.arc(world.food.x*CS+CS/2, world.food.y*CS+CS/2, CS/2-3, 0, 7); cx.fill();
+    for(const k of Object.keys(world.snakes)){
+      const s=world.snakes[k], i=+k, col=HUES[i%HUES.length];
+      const isMe=bridge&&bridge.players[i]&&bridge.players[i].isMe;
+      cx.globalAlpha=s.alive?1:.3;
+      s.body.forEach((b,j)=>{ cx.fillStyle=j===0?(isMe?'#fff':col):col;
+        rr(b.x*CS+2,b.y*CS+2,CS-4,CS-4,5); });
+      cx.globalAlpha=1;
+      const h=s.body[0];
+      if(isMe){ cx.strokeStyle='#fff'; cx.lineWidth=2; cx.strokeRect(h.x*CS+1,h.y*CS+1,CS-2,CS-2); }
+    }
+    const my=bridge?world.snakes[bridge.seat]:world.snakes[0];
+    scEl.textContent=my?my.score:(world.snakes[0]?world.snakes[0].score:0);
+  }
+  function rr(x,y,w,h,r){ cx.beginPath(); cx.moveTo(x+r,y); cx.arcTo(x+w,y,x+w,y+h,r); cx.arcTo(x+w,y+h,x,y+h,r); cx.arcTo(x,y+h,x,y,r); cx.arcTo(x,y,x+w,y,r); cx.fill(); }
+
+  /* ---------- 输入 ---------- */
+  function turn(d){ me.dir=d;
+    if(bridge&&!bridge.isAuth) post({type:'peer',data:{dir:d}});
+    else if(bridge&&bridge.isAuth&&world){ const s=world.snakes[bridge.seat]; if(s&&d!==OPP[s.dir]) s.dir=d; }
+  }
+  document.querySelectorAll('#pad button').forEach(b=>b.onclick=()=>turn(b.dataset.d));
+  window.addEventListener('keydown',e=>{ const m={ArrowUp:'u',ArrowDown:'d',ArrowLeft:'l',ArrowRight:'r'}[e.key]; if(m){e.preventDefault();turn(m);} });
+  let ts=null;
+  cv.addEventListener('touchstart',e=>{ts=e.touches[0]},{passive:true});
+  cv.addEventListener('touchend',e=>{ if(!ts)return; const t=e.changedTouches[0];
+    const dx=t.clientX-ts.clientX, dy=t.clientY-ts.clientY;
+    if(Math.abs(dx)<18&&Math.abs(dy)<18) return;
+    turn(Math.abs(dx)>Math.abs(dy)?(dx>0?'r':'l'):(dy>0?'d':'u')); ts=null; },{passive:true});
+
+  /* ---------- 主循环 ---------- */
+  let timer=0;
+  function start(){ if(timer) return; ensureWorld0(); fit(); paint(); timer=setInterval(step, TICK); }
+  function ensureWorld0(){ if(!bridge){ // 本地模式：一条蛇 + 一条 AI
+      bridge={seat:0,isAuth:true,players:[{seat:0,type:'human',isMe:true,name:'我'},{seat:1,type:'ai',name:'AI'}]};
+      modeEl.textContent='本地模式'; }
+    ensureWorld(); }
+  fit();
+  setTimeout(fit,200);
+})();
+</script>
+</body>
+</html>
